@@ -27,15 +27,13 @@ const app = express();
    Middlewares
 =========================== */
 
+const cors = require("cors");
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL
-      ? process.env.CLIENT_URL.split(",")
-      : [
-          "http://localhost:5173",
-          "http://localhost:5174",
-          "http://localhost:5175",
-        ],
+    origin: [
+      "https://multi-vendor-e-commerce-ar8.vercel.app",
+    ],
     credentials: true,
   })
 );
