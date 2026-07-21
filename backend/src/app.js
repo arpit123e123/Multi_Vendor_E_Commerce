@@ -16,9 +16,8 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const wishlistRoutes = require("./routes/wishlistRoutes");
-const couponRoutes = require("./routes/couponRoutes"); // Rename file if needed
+const couponRoutes = require("./routes/couponRoutes");
 
-// Middleware
 const errorHandler = require("./middleware/errorMiddleware");
 
 const app = express();
@@ -27,12 +26,12 @@ const app = express();
    Middlewares
 =========================== */
 
-const cors = require("cors");
-
 app.use(
   cors({
     origin: [
+      "http://localhost:5173",
       "https://multi-vendor-e-commerce-ar8.vercel.app",
+      "https://multi-vendor-e-commerce-git-master-ar8.vercel.app",
     ],
     credentials: true,
   })
@@ -74,6 +73,7 @@ app.use("/api/coupon", couponRoutes);
 /* ===========================
    404 Route
 =========================== */
+
 app.use((req, res) => {
   res.status(404).json({
     success: false,
