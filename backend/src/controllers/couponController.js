@@ -4,6 +4,16 @@ const Coupon = require("../models/Coupon");
 
 const createCoupon = async (req, res) => {
   try {
+    const exists = await Coupon.findOne({
+      code: req.body.code.toUpperCase(),
+    });
+
+    if (exists) {
+      return res.status(400).json({
+        success: false,
+        message: "Coupon code already exists",
+      });
+    }
     const coupon = await Coupon.create(req.body);
 
     res.status(201).json({
@@ -66,6 +76,12 @@ const applyCoupon = async (req, res) => {
 
         message: "Coupon expired",
       });
+      if (coupon.usedCount >= coupon.usageLimit) {
+        return res.status(400).json({
+          success: false,
+          message: "Coupon usage limit reached",
+        });
+      }
     }
 
     if (totalAmount < coupon.minimumAmount) {
@@ -77,6 +93,13 @@ const applyCoupon = async (req, res) => {
     }
 
     let discount = 0;
+
+    if (discount > totalAmount) {
+      discount = totalAmount;
+    }
+
+    coupon.usedCount += 1;
+    await coupon.save();
 
     if (coupon.discountType === "PERCENTAGE") {
       discount = (totalAmount * coupon.discountValue) / 100;
@@ -128,8 +151,6 @@ const deleteCoupon = async (req, res) => {
   }
 };
 
-
-
 module.exports = {
   createCoupon,
 
@@ -137,5 +158,4 @@ module.exports = {
 
   applyCoupon,
   deleteCoupon,
-
 };

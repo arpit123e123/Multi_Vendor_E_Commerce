@@ -94,7 +94,9 @@ const updateCart = async (req, res) => {
     const { quantity } = req.body;
     const { productId } = req.params;
 
-    const cart = await Cart.findOne({ user: req.user._id });
+    const cart = await Cart.findOne({
+      user: req.user._id,
+    });
 
     if (!cart) {
       return res.status(404).json({
@@ -114,16 +116,35 @@ const updateCart = async (req, res) => {
       });
     }
 
-    item.quantity = quantity;
+    if (quantity <= 0) {
+      cart.items = cart.items.filter(
+        (item) => item.product.toString() !== productId
+      );
+    } else {
+      item.quantity = quantity;
+    }
 
     await cart.save();
 
-    res.status(200).json({
-      success: true,
-      message: "Cart Updated",
-      cart,
+    await cart.populate("items.product");
+
+    let totalItems = 0;
+    let subtotal = 0;
+
+    cart.items.forEach((item) => {
+      if (!item.product) return;
+
+      totalItems += item.quantity;
+      subtotal += item.quantity * item.product.price;
     });
 
+    return res.status(200).json({
+      success: true,
+      message: "Cart Updated",
+      totalItems,
+      subtotal,
+      cart,
+    });
   } catch (error) {
     res.status(500).json({
       success: false,
@@ -153,14 +174,27 @@ const removeItem = async (req, res) => {
 
     await cart.save();
 
-    res.status(200).json({
-      success: true,
-      message: "Item Removed",
-      cart,
+    await cart.populate("items.product");
+
+    let totalItems = 0;
+    let subtotal = 0;
+
+    cart.items.forEach((item) => {
+      if (!item.product) return;
+
+      totalItems += item.quantity;
+      subtotal += item.quantity * item.product.price;
     });
 
+    return res.status(200).json({
+      success: true,
+      message: "Item Removed",
+      totalItems,
+      subtotal,
+      cart,
+    });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });

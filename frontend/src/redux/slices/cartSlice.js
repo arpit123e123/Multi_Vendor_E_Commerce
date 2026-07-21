@@ -107,25 +107,49 @@ const cartSlice = createSlice({
             : action.payload?.message || action.error.message;
       })
       .addCase(updateCart.pending, (state, action) => {
-        state.error = null;
-        state.updatingProductId = action.meta.arg.productId;
-      })
-      .addCase(updateCart.fulfilled, (state, action) => {
-        state.updatingProductId = null;
-        state.items = action.payload.cart?.items || [];
-      })
+  state.error = null;
+
+  const { productId, quantity } = action.meta.arg;
+
+  state.updatingProductId = productId;
+
+  const item = state.items.find(
+    (item) => item.product?._id === productId
+  );
+
+  if (item) {
+    item.quantity = quantity;
+  }
+})
+     .addCase(updateCart.fulfilled, (state, action) => {
+  state.updatingProductId = null;
+
+  if (action.payload.cart?.items) {
+    state.items = action.payload.cart.items;
+  }
+})
       .addCase(updateCart.rejected, (state, action) => {
         state.updatingProductId = null;
         state.error = action.payload?.message || action.error.message;
       })
-      .addCase(removeItem.pending, (state, action) => {
-        state.error = null;
-        state.removingProductId = action.meta.arg;
-      })
-      .addCase(removeItem.fulfilled, (state, action) => {
-        state.removingProductId = null;
-        state.items = action.payload.cart?.items || [];
-      })
+  .addCase(removeItem.pending, (state, action) => {
+  state.error = null;
+
+  const productId = action.meta.arg;
+
+  state.removingProductId = productId;
+
+  state.items = state.items.filter(
+    (item) => item.product?._id !== productId
+  );
+})
+     .addCase(removeItem.fulfilled, (state, action) => {
+  state.removingProductId = null;
+
+  if (action.payload.cart?.items) {
+    state.items = action.payload.cart.items;
+  }
+})
       .addCase(removeItem.rejected, (state, action) => {
         state.removingProductId = null;
         state.error = action.payload?.message || action.error.message;

@@ -1,29 +1,86 @@
-const Vendor = require("../models/Vendor");
-const Product = require("../models/Product");
-const Order = require("../models/Order");
+const User = require("../models/User");
 
-const createVendor = async (req, res) => {
+/* ===========================
+   Become Vendor
+=========================== */
+
+const becomeVendor = async (req, res) => {
   try {
-    const existingVendor = await Vendor.findOne({
-      owner: req.user._id,
-    });
+    const { shopName, shopDescription, address, city, state, country, pincode } = req.body;
 
-    if (existingVendor) {
+    if (!shopName) {
       return res.status(400).json({
         success: false,
-        message: "Vendor already exists",
+        message: "Shop name is required",
       });
     }
 
-    const vendor = await Vendor.create({
-      owner: req.user._id,
-      shopName: req.body.shopName,
-      description: req.body.description,
-      address: req.body.address,
-      phone: req.body.phone,
-    });
+    const user = await User.findById(req.user.id);
 
-    res.status(201).json({
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (user.role === "vendor") {
+      return res.status(400).json({
+        success: false,
+        message: "You are already a vendor",
+      });
+    }
+
+    if (user.vendorRequest === "pending") {
+      return res.status(400).json({
+        success: false,
+        message: "Vendor request already pending",
+      });
+    }
+
+    user.shopName = shopName;
+    user.shopDescription = shopDescription || "";
+    user.address = address || "";
+    user.city = city || "";
+    user.state = state || "";
+    user.country = country || "India";
+    user.pincode = pincode || "";
+
+    user.vendorRequest = "pending";
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Vendor request submitted successfully",
+      user,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+/* ===========================
+   Get Vendor Profile
+=========================== */
+
+const getVendorProfile = async (req, res) => {
+  try {
+    const vendor = await User.findById(req.user.id).select("-password");
+
+    if (!vendor) {
+      return res.status(404).json({
+        success: false,
+        message: "Vendor not found",
+      });
+    }
+
+    res.status(200).json({
       success: true,
       vendor,
     });
@@ -34,82 +91,8 @@ const createVendor = async (req, res) => {
     });
   }
 };
-const getVendorDashboard = async (req, res) => {
-  try {
-    const vendor = await Vendor.findOne({ owner: req.user.id });
 
-    if (!vendor) {
-      return res.status(404).json({
-        success: false,
-        message: "Vendor not found",
-      });
-    }
-
-    const totalProducts = await Product.countDocuments({
-      vendor: vendor._id,
-    });
-
-    const orders = await Order.find({
-      "items.vendor": vendor._id,
-    });
-
-    const totalOrders = orders.length;
-
-    const totalRevenue = orders.reduce(
-      (sum, order) => sum + order.totalAmount,
-      0
-    );
-
-    res.status(200).json({
-      success: true,
-      dashboard: {
-        totalProducts,
-        totalOrders,
-        totalRevenue,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
+module.exports = {
+  becomeVendor,
+  getVendorProfile,
 };
-const getVendorProducts = async (req, res) => {
-  try {
-
-    const vendor = await Vendor.findOne({
-      owner: req.user._id,
-    });
-
-    if (!vendor) {
-      return res.status(404).json({
-        success: false,
-        message: "Vendor not found",
-      });
-    }
-
-
-    const products = await Product.find({
-      vendor: vendor._id,
-    }).populate("category");
-
-
-    res.status(200).json({
-      success: true,
-      products,
-    });
-
-
-  } catch (error) {
-
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-
-  }
-};
-
-
-module.exports = { createVendor , getVendorDashboard , getVendorProducts };

@@ -29,15 +29,14 @@ import VendorOrders from "../pages/vendor/Orders";
 
 import ProtectedRoute from "../components/ProtectedRoute";
 
+import ForgotPassword from "../pages/Auth/ForgotPassword";
+import VerifyOtp from "../pages/Auth/VerifyOtp";
+import ResetPassword from "../pages/Auth/ResetPassword";
 
 function AppRoutes() {
-
   return (
-
     <BrowserRouter>
-
       <Routes>
-
         {/* ================= USER ================= */}
 
         <Route path="/" element={<Home />} />
@@ -48,11 +47,7 @@ function AppRoutes() {
 
         <Route path="/products" element={<Products />} />
 
-        <Route
-          path="/products/:id"
-          element={<ProductDetails />}
-        />
-
+        <Route path="/products/:id" element={<ProductDetails />} />
 
         <Route
           path="/cart"
@@ -63,7 +58,6 @@ function AppRoutes() {
           }
         />
 
-
         <Route
           path="/wishlist"
           element={
@@ -72,7 +66,6 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
 
         <Route
           path="/checkout"
@@ -83,7 +76,6 @@ function AppRoutes() {
           }
         />
 
-
         <Route
           path="/orders"
           element={
@@ -92,7 +84,6 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
 
         <Route
           path="/profile"
@@ -103,10 +94,7 @@ function AppRoutes() {
           }
         />
 
-
-
         {/* ================= ADMIN ================= */}
-
 
         <Route
           path="/admin"
@@ -117,7 +105,6 @@ function AppRoutes() {
           }
         />
 
-
         <Route
           path="/admin/products"
           element={
@@ -126,7 +113,6 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
 
         <Route
           path="/admin/categories"
@@ -137,7 +123,6 @@ function AppRoutes() {
           }
         />
 
-
         <Route
           path="/admin/orders"
           element={
@@ -146,7 +131,6 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
 
         <Route
           path="/admin/users"
@@ -157,7 +141,6 @@ function AppRoutes() {
           }
         />
 
-
         <Route
           path="/admin/vendors"
           element={
@@ -166,7 +149,6 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
 
         <Route
           path="/admin/coupons"
@@ -177,10 +159,7 @@ function AppRoutes() {
           }
         />
 
-
-
         {/* ================= VENDOR ================= */}
-
 
         <Route
           path="/vendor"
@@ -191,7 +170,6 @@ function AppRoutes() {
           }
         />
 
-
         <Route
           path="/vendor/add-product"
           element={
@@ -200,7 +178,6 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
 
         <Route
           path="/vendor/products"
@@ -211,7 +188,6 @@ function AppRoutes() {
           }
         />
 
-
         <Route
           path="/vendor/orders"
           element={
@@ -221,15 +197,14 @@ function AppRoutes() {
           }
         />
 
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
+        <Route path="/verify-otp" element={<VerifyOtp />} />
 
+        <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>
-
     </BrowserRouter>
-
   );
-
 }
-
 
 export default AppRoutes;

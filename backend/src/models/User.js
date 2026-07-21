@@ -43,7 +43,15 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+resetOtp: {
+  type: String,
+  default: null,
+},
 
+resetOtpExpire: {
+  type: Date,
+  default: null,
+},
     vendorRequest: {
       type: String,
       enum: ["none", "pending", "approved", "rejected"],

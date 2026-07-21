@@ -7,6 +7,10 @@ const {
   getSingleProduct,
   updateProduct,
   deleteProduct,
+  addReview,
+  updateReview,
+  deleteReview,
+  getRelatedProducts,
 } = require("../controllers/productController");
 
 const {
@@ -34,8 +38,13 @@ router.post(
   createProduct
 );
 
+
 router.get("/", getAllProducts);
 router.get("/:id", getSingleProduct);
+router.get(
+  "/related/:id",
+  getRelatedProducts
+);
 
 router.put(
   "/:id",
@@ -50,5 +59,28 @@ router.delete(
   authorize("vendor"),
   deleteProduct
 );
+// ================= Reviews =================
+
+// Add Review
+router.post(
+  "/:id/review",
+  protect,
+  addReview
+);
+
+// Update Review
+router.put(
+  "/:id/review",
+  protect,
+  updateReview
+);
+
+// Delete Review
+router.delete(
+  "/:id/review",
+  protect,
+  deleteReview
+);
+
 
 module.exports = router;

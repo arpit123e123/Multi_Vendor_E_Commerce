@@ -1,31 +1,15 @@
 const express = require("express");
 const router = express.Router();
 
-const {
-  protect,
-  authorize,
-} = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 
 const {
-  createVendor,
-  getVendorProducts,
+  becomeVendor,
+  getVendorProfile,
 } = require("../controllers/vendorController");
 
+router.post("/request", protect, becomeVendor);
 
-router.post(
-  "/create",
-  protect,
-  authorize("vendor"),
-  createVendor
-);
-
-
-router.get(
-  "/products",
-  protect,
-  authorize("vendor"),
-  getVendorProducts
-);
-
+router.get("/profile", protect, getVendorProfile);
 
 module.exports = router;

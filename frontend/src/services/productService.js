@@ -13,3 +13,7 @@ export const getSingleProduct = async (id) => {
   const response = await api.get(`/products/${id}`);
   return response.data;
 };
+export const getRelatedProducts = async (id) => {
+  const response = await api.get(`/products/related/${id}`);
+  return response.data;
+};

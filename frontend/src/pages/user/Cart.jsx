@@ -1,17 +1,18 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import {
-  getCart,
-  updateCart,
-  removeItem,
-} from "../../redux/slices/cartSlice";
+import { getCart, updateCart, removeItem } from "../../redux/slices/cartSlice";
 import MainLayout from "../../layouts/MainLayout";
 
 const Cart = () => {
   const dispatch = useDispatch();
 
-  const { items, loading } = useSelector((state) => state.cart);
+const {
+  items,
+  loading,
+  updatingProductId,
+  removingProductId,
+} = useSelector((state) => state.cart);
 
   useEffect(() => {
     dispatch(getCart());
@@ -24,7 +25,7 @@ const Cart = () => {
       updateCart({
         productId: item.product._id,
         quantity: item.quantity + 1,
-      })
+      }),
     );
   };
 
@@ -35,18 +36,20 @@ const Cart = () => {
       updateCart({
         productId: item.product._id,
         quantity: item.quantity - 1,
-      })
+      }),
     );
   };
 
   const handleRemove = (item) => {
     dispatch(removeItem(item.product._id));
   };
+  const total = items.reduce((sum, item) => {
+    if (!item.product) return sum;
 
-  const total = items.reduce(
-    (sum, item) => sum + item.product.price * item.quantity,
-    0
-  );
+    return (
+      sum + (Number(item.product.price) || 0) * (Number(item.quantity) || 0)
+    );
+  }, 0);
 
   if (loading) {
     return (
@@ -63,17 +66,11 @@ const Cart = () => {
   return (
     <MainLayout>
       <div className="max-w-7xl mx-auto px-6 py-10">
-
-        <h1 className="text-4xl font-bold mb-8">
-          🛒 My Shopping Cart
-        </h1>
+        <h1 className="text-4xl font-bold mb-8">🛒 My Shopping Cart</h1>
 
         {items.length === 0 ? (
           <div className="bg-white rounded-xl shadow p-10 text-center">
-
-            <h2 className="text-2xl font-semibold">
-              Your cart is empty
-            </h2>
+            <h2 className="text-2xl font-semibold">Your cart is empty</h2>
 
             <p className="text-gray-500 mt-2">
               Looks like you haven't added anything yet.
@@ -85,103 +82,88 @@ const Cart = () => {
             >
               Continue Shopping
             </Link>
-
           </div>
         ) : (
           <div className="grid lg:grid-cols-3 gap-8">
-
             {/* Cart Items */}
 
             <div className="lg:col-span-2 space-y-5">
+              {items
+                .filter((item) => item.product)
+                .map((item) => (
+                  <div
+                    key={item.product?._id}
+                    className="bg-white rounded-xl shadow p-5 flex flex-col md:flex-row justify-between gap-5"
+                  >
+                    <div className="flex gap-5">
+                      <img
+                        src={item.product.images?.[0] || "/no-image.png"}
+                        alt={item.product?.name}
+                        className="w-28 h-28 object-cover rounded-lg"
+                      />
 
-              {items.map((item) => (
+                      <div>
+                        <h2 className="text-xl font-bold">
+                          {item.product?.name}
+                        </h2>
 
-                <div
-                  key={item.product._id}
-                  className="bg-white rounded-xl shadow p-5 flex flex-col md:flex-row justify-between gap-5"
-                >
-                  <div className="flex gap-5">
+                        <p className="text-blue-600 text-lg font-semibold mt-2">
+                          ₹{Number(item.product.price).toLocaleString("en-IN")}
+                        </p>
 
-                    <img
-                      src={
-                        item.product.images?.[0] ||
-                        "/no-image.png"
-                      }
-                      alt={item.product.name}
-                      className="w-28 h-28 object-cover rounded-lg"
-                    />
-
-                    <div>
-
-                      <h2 className="text-xl font-bold">
-                        {item.product.name}
-                      </h2>
-
-                      <p className="text-blue-600 text-lg font-semibold mt-2">
-                        ₹{Number(item.product.price).toLocaleString("en-IN")}
-                      </p>
-
-                      <p
-                        className={`mt-2 ${
-                          item.product.stock > 0
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {item.product.stock > 0
-                          ? `In Stock (${item.product.stock})`
-                          : "Out of Stock"}
-                      </p>
-
+                        <p
+                          className={`mt-2 ${
+                            item.product.stock > 0
+                              ? "text-green-600"
+                              : "text-red-600"
+                          }`}
+                        >
+                          {item.product.stock > 0
+                            ? `In Stock (${item.product.stock})`
+                            : "Out of Stock"}
+                        </p>
+                      </div>
                     </div>
 
-                  </div>
+                    <div className="flex flex-col justify-between items-end">
+                      <div className="flex items-center gap-3">
+                        <button
+  onClick={() => decreaseQty(item)}
+  disabled={updatingProductId === item.product._id}
+  className="bg-gray-200 w-8 h-8 rounded disabled:opacity-50"
+>
+  {updatingProductId === item.product._id ? "..." : "-"}
+</button>
 
-                  <div className="flex flex-col justify-between items-end">
+                        <span className="font-bold">{item.quantity}</span>
 
-                    <div className="flex items-center gap-3">
-
-                      <button
-                        onClick={() => decreaseQty(item)}
-                        className="bg-gray-200 w-8 h-8 rounded"
-                      >
-                        -
-                      </button>
-
-                      <span className="font-bold">
-                        {item.quantity}
-                      </span>
-
-                      <button
-                        onClick={() => increaseQty(item)}
-                        className="bg-gray-200 w-8 h-8 rounded"
-                      >
-                        +
-                      </button>
-
-                    </div>
+                        <button
+  onClick={() => increaseQty(item)}
+  disabled={updatingProductId === item.product._id}
+  className="bg-gray-200 w-8 h-8 rounded disabled:opacity-50"
+>
+  {updatingProductId === item.product._id ? "..." : "+"}
+</button>
+                      </div>
 
                     <button
-                      onClick={() => handleRemove(item)}
-                      className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"
-                    >
-                      Remove
-                    </button>
-
+  onClick={() => handleRemove(item)}
+  disabled={removingProductId === item.product._id}
+  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg disabled:opacity-50"
+>
+  {removingProductId === item.product._id
+    ? "Removing..."
+    : "Remove"}
+</button>
+                    </div>
                   </div>
-                </div>
-
-              ))}
-
+                ))}
             </div>
 
             {/* Order Summary */}
 
             <div className="bg-white rounded-xl shadow p-6 h-fit sticky top-24">
-
-              <h2 className="text-2xl font-bold mb-5">
-                Order Summary
-              </h2>
+              <h2 className="text-2xl font-bold mb-5">Order Summary</h2>
 
               <div className="flex justify-between mb-3">
                 <span>Items</span>
@@ -204,12 +186,9 @@ const Cart = () => {
               >
                 Proceed To Checkout
               </Link>
-
             </div>
-
           </div>
         )}
-
       </div>
     </MainLayout>
   );
