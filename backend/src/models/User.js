@@ -36,11 +36,60 @@ const userSchema = new mongoose.Schema(
     phone: {
       type: String,
       trim: true,
+      default: "",
     },
 
     isVerified: {
       type: Boolean,
       default: false,
+    },
+
+    vendorRequest: {
+      type: String,
+      enum: ["none", "pending", "approved", "rejected"],
+      default: "none",
+    },
+
+    shopName: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    shopDescription: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    shopLogo: {
+      type: String,
+      default: "",
+    },
+
+    address: {
+      type: String,
+      default: "",
+    },
+
+    city: {
+      type: String,
+      default: "",
+    },
+
+    state: {
+      type: String,
+      default: "",
+    },
+
+    country: {
+      type: String,
+      default: "India",
+    },
+
+    pincode: {
+      type: String,
+      default: "",
     },
   },
   {
@@ -48,19 +97,19 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Hash password before saving
+// Hash Password
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) {
-    return next();
-  }
+  if (!this.isModified("password")) return next();
 
-  this.password = await bcrypt.hash(this.password, 10);
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+
   next();
 });
 
-// Compare password
+// Compare Password
 userSchema.methods.comparePassword = async function (enteredPassword) {
-  return bcrypt.compare(enteredPassword, this.password);
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
 module.exports = mongoose.model("User", userSchema);
