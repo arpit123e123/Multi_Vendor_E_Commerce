@@ -30,21 +30,50 @@ const productSchema = new mongoose.Schema(
       default: 0,
     },
 
-   category: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "Category",
-  required: true,
-},
+    category: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: true,
+    },
 
-averageRating: {
-  type: Number,
-  default: 0,
-},
+    averageRating: {
+      type: Number,
+      default: 0,
+    },
 
-numReviews: {
-  type: Number,
-  default: 0,
-},
+    numReviews: {
+      type: Number,
+      default: 0,
+    },
+
+    reviews: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+
+        rating: {
+          type: Number,
+          required: true,
+          min: 1,
+          max: 5,
+        },
+
+        comment: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
     images: [
       {
         type: String,
@@ -60,33 +89,5 @@ numReviews: {
     timestamps: true,
   }
 );
-
-reviews: [
-  {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
-    },
-
-    rating: {
-      type: Number,
-      required: true,
-      min: 1,
-      max: 5,
-    },
-
-    comment: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-
-    createdAt: {
-      type: Date,
-      default: Date.now,
-    },
-  },
-],
 
 module.exports = mongoose.model("Product", productSchema);

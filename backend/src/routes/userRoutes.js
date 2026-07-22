@@ -1,25 +1,21 @@
 const express = require("express");
 const router = express.Router();
 
-const { protect, authorize } = require("../middleware/authMiddleware");
+const {
+  getProfile,
+  updateProfile,
+  changePassword,
+} = require("../controllers/userController");
 
-router.get("/profile", protect, (req, res) => {
-  res.json({
-    success: true,
-    user: req.user,
-  });
-});
+const { protect } = require("../middleware/authMiddleware");
 
-router.get(
-  "/admin",
-  protect,
-  authorize("admin"),
-  (req, res) => {
-    res.json({
-      success: true,
-      message: "Welcome Admin",
-    });
-  }
-);
+// Get Profile
+router.get("/profile", protect, getProfile);
+
+// Update Profile
+router.put("/profile", protect, updateProfile);
+
+// Change Password
+router.put("/change-password", protect, changePassword);
 
 module.exports = router;
