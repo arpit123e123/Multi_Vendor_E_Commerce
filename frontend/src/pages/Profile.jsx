@@ -52,6 +52,13 @@ const Profile = () => {
 
   const handlePassword = (e) => {
     e.preventDefault();
+    if (!password.currentPassword || !password.newPassword) {
+  return;
+}
+
+if (password.newPassword.length < 6) {
+  return;
+}
     dispatch(changePassword(password));
   };
 
@@ -81,6 +88,7 @@ const Profile = () => {
             className="border p-3 w-full"
             placeholder="Phone"
             value={form.phone}
+            maxLength={10}
             onChange={(e)=>
               setForm({...form,phone:e.target.value})
             }
@@ -126,17 +134,19 @@ const Profile = () => {
             className="border p-3 w-full"
             placeholder="Pincode"
             value={form.pincode}
+            maxLength={6}
             onChange={(e)=>
               setForm({...form,pincode:e.target.value})
             }
           />
 
           <button
-            className="bg-blue-600 text-white px-6 py-3 rounded"
-          >
-            Update Profile
-          </button>
-
+  type="submit"
+  disabled={loading}
+  className="bg-blue-600 text-white px-6 py-3 rounded disabled:opacity-50"
+>
+  {loading ? "Updating..." : "Update Profile"}
+</button>
         </form>
 
         <hr className="my-10"/>

@@ -40,7 +40,7 @@ app.use(
 );
 app.use(helmet());
 
-app.use(mongoSanitize());
+//app.use(mongoSanitize());
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,

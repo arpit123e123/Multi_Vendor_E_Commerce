@@ -11,12 +11,10 @@ const updateProductRating = async (product) => {
 
     const total = product.reviews.reduce(
       (sum, review) => sum + review.rating,
-      0
+      0,
     );
 
-    product.averageRating = Number(
-      (total / product.reviews.length).toFixed(1)
-    );
+    product.averageRating = Number((total / product.reviews.length).toFixed(1));
   }
 
   await product.save();
@@ -25,7 +23,13 @@ const createProduct = async (req, res) => {
   try {
     const { name, description, price, stock, category } = req.body;
 
-    if (!name || !description || !price || !stock || !category) {
+    if (
+      !name ||
+      !description ||
+      price === undefined ||
+      stock === undefined ||
+      !category
+    ) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
@@ -86,6 +90,9 @@ const getAllProducts = async (req, res) => {
       category,
       minPrice,
       maxPrice,
+      minRating,
+      inStock,
+      vendor,
       page = 1,
       limit = 10,
       sort,
@@ -130,6 +137,21 @@ const getAllProducts = async (req, res) => {
         query.price.$lte = Number(maxPrice);
       }
     }
+    if (minRating) {
+      query.averageRating = {
+        $gte: Number(minRating),
+      };
+    }
+
+    if (inStock === "true") {
+      query.stock = {
+        $gt: 0,
+      };
+    }
+
+    if (vendor) {
+      query.vendor = vendor;
+    }
 
     let sortOption = {
       createdAt: -1,
@@ -147,7 +169,12 @@ const getAllProducts = async (req, res) => {
       case "rating":
         sortOption = { averageRating: -1 };
         break;
-
+      case "popular":
+        sortOption = {
+          numReviews: -1,
+          averageRating: -1,
+        };
+        break;
       case "latest":
         sortOption = { createdAt: -1 };
         break;
@@ -156,6 +183,10 @@ const getAllProducts = async (req, res) => {
     const totalProducts = await Product.countDocuments(query);
 
     const products = await Product.find(query)
+    
+      .select(
+        "name price images averageRating numReviews stock vendor category createdAt",
+      )
       .populate("category", "name")
       .populate("vendor", "shopName")
       .sort(sortOption)
@@ -164,10 +195,13 @@ const getAllProducts = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      totalProducts,
-      totalPages: Math.ceil(totalProducts / pageSize),
-      currentPage,
       products,
+      totalProducts,
+      currentPage,
+      pageSize,
+      totalPages: Math.ceil(totalProducts / pageSize),
+      hasNextPage: currentPage < Math.ceil(totalProducts / pageSize),
+      hasPrevPage: currentPage > 1,
     });
   } catch (error) {
     console.error(error);
@@ -177,6 +211,7 @@ const getAllProducts = async (req, res) => {
       message: "Failed to fetch products",
     });
   }
+  
 };
 
 const getSingleProduct = async (req, res) => {
@@ -282,8 +317,11 @@ const updateProduct = async (req, res) => {
 
     product.name = req.body.name ?? product.name;
     product.description = req.body.description ?? product.description;
-    product.price = req.body.price ?? product.price;
-    product.stock = req.body.stock ?? product.stock;
+    product.price =
+      req.body.price !== undefined ? Number(req.body.price) : product.price;
+
+    product.stock =
+      req.body.stock !== undefined ? Number(req.body.stock) : product.stock;
     product.category = req.body.category ?? product.category;
 
     await product.save();
@@ -351,6 +389,12 @@ const deleteProduct = async (req, res) => {
 const addReview = async (req, res) => {
   try {
     const { rating, comment } = req.body;
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({
+        success: false,
+        message: "Rating must be between 1 and 5",
+      });
+    }
 
     const product = await Product.findById(req.params.id);
 
@@ -362,7 +406,7 @@ const addReview = async (req, res) => {
     }
 
     const alreadyReviewed = product.reviews.find(
-      (review) => review.user.toString() === req.user._id.toString()
+      (review) => review.user.toString() === req.user._id.toString(),
     );
 
     if (alreadyReviewed) {
@@ -396,6 +440,12 @@ const addReview = async (req, res) => {
 const updateReview = async (req, res) => {
   try {
     const { rating, comment } = req.body;
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({
+        success: false,
+        message: "Rating must be between 1 and 5",
+      });
+    }
 
     const product = await Product.findById(req.params.id);
 
@@ -407,7 +457,7 @@ const updateReview = async (req, res) => {
     }
 
     const review = product.reviews.find(
-      (review) => review.user.toString() === req.user._id.toString()
+      (review) => review.user.toString() === req.user._id.toString(),
     );
 
     if (!review) {
@@ -445,7 +495,7 @@ const deleteReview = async (req, res) => {
     }
 
     product.reviews = product.reviews.filter(
-      (review) => review.user.toString() !== req.user._id.toString()
+      (review) => review.user.toString() !== req.user._id.toString(),
     );
 
     await updateProductRating(product);
@@ -469,7 +519,6 @@ module.exports = {
   deleteProduct,
   addReview,
   updateReview,
-  deleteReview, 
+  deleteReview,
   getRelatedProducts,
-  
 };

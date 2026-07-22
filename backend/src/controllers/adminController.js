@@ -9,8 +9,8 @@ const getAllVendors = async (req, res) => {
   try {
 
     const vendors = await Vendor.find()
-      .populate("owner", "name email");
-
+  .populate("owner", "name email")
+  .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -51,16 +51,24 @@ const getAllOrders = async (req, res) => {
 
 const updateOrderStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+   const { status } = req.body;
 
-    const order = await Order.findById(req.params.id);
+const validStatuses = [
+  "Pending",
+  "Processing",
+  "Shipped",
+  "Delivered",
+  "Cancelled",
+];
 
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: "Order not found",
-      });
-    }
+if (!validStatuses.includes(status)) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid order status",
+  });
+}
+
+order.orderStatus = status;
 
     order.orderStatus = status;
 
@@ -156,7 +164,9 @@ const getTopProducts = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password");
+   const users = await User.find()
+  .select("-password")
+  .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,

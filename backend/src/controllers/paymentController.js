@@ -38,7 +38,12 @@ const createPaymentOrder = async (req, res) => {
 
     }
 
-
+if (dbOrder.totalAmount <= 0) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid payment amount",
+  });
+}
 
     const options = {
 
@@ -90,6 +95,12 @@ const createPaymentOrder = async (req, res) => {
 
 
   }
+  if (dbOrder.paymentStatus === "Paid") {
+  return res.status(400).json({
+    success: false,
+    message: "Order has already been paid",
+  });
+}
 
 };
 
@@ -178,7 +189,12 @@ const verifyPayment = async (req,res)=>{
       });
 
     }
-
+if (order.paymentStatus === "Paid") {
+  return res.status(400).json({
+    success: false,
+    message: "Payment already verified",
+  });
+}
 
 
     order.paymentStatus = "Paid";

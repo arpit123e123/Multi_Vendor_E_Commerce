@@ -12,22 +12,28 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
+       minlength: [3, "Product name must be at least 3 characters"],
+  maxlength: [100, "Product name cannot exceed 100 characters"],
     },
 
-    description: {
-      type: String,
-      required: true,
-    },
+   description: {
+  type: String,
+  required: true,
+  trim: true,
+  maxlength: [2000, "Description is too long"],
+},
 
     price: {
       type: Number,
       required: true,
+        min: [0, "Price cannot be negative"],
     },
 
     stock: {
       type: Number,
       required: true,
       default: 0,
+        min: [0, "Stock cannot be negative"],
     },
 
     category: {
@@ -75,10 +81,11 @@ const productSchema = new mongoose.Schema(
     ],
 
     images: [
-      {
-        type: String,
-      },
-    ],
+  {
+    public_id: String,
+    url: String,
+  },
+],
 
     isActive: {
       type: Boolean,

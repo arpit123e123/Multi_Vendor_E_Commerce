@@ -94,6 +94,12 @@ const createOrder = async (req, res) => {
 
       0,
     );
+    if (totalAmount <= 0) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid order amount",
+  });
+}
 
     const order = await Order.create({
       user: req.user._id,
@@ -124,9 +130,12 @@ const createOrder = async (req, res) => {
     // Reduce stock
 
     for (const item of cart.items) {
-      item.product.stock -= item.quantity;
+      item.product.stock = Math.max(
+  0,
+  item.product.stock - item.quantity
+);
 
-      await item.product.save();
+await item.product.save();
     }
 
     // Clear cart
@@ -217,6 +226,15 @@ const updateOrderStatus = async (req, res) => {
 
         message: "Order not found",
       });
+      if (
+  order.orderStatus === "Delivered" ||
+  order.orderStatus === "Cancelled"
+) {
+  return res.status(400).json({
+    success: false,
+    message: "This order can no longer be updated",
+  });
+}
     }
 
     order.orderStatus = status;

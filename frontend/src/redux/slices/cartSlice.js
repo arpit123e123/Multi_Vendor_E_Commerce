@@ -20,9 +20,11 @@ export const addToCart = createAsyncThunk(
     try {
       return await cartService.addToCart({ productId, quantity });
     } catch (err) {
-      return rejectWithValue(getErrorPayload(err, "Failed to add item to cart"));
+      return rejectWithValue(
+        getErrorPayload(err, "Failed to add item to cart"),
+      );
     }
-  }
+  },
 );
 
 export const getCart = createAsyncThunk(
@@ -33,7 +35,7 @@ export const getCart = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(getErrorPayload(err, "Failed to fetch cart"));
     }
-  }
+  },
 );
 
 export const updateCart = createAsyncThunk(
@@ -44,7 +46,7 @@ export const updateCart = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(getErrorPayload(err, "Failed to update cart"));
     }
-  }
+  },
 );
 
 export const removeItem = createAsyncThunk(
@@ -55,7 +57,7 @@ export const removeItem = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(getErrorPayload(err, "Failed to remove item"));
     }
-  }
+  },
 );
 
 const cartSlice = createSlice({
@@ -98,6 +100,7 @@ const cartSlice = createSlice({
         state.loading = false;
         state.items = action.payload.cart?.items || [];
       })
+   
       .addCase(getCart.rejected, (state, action) => {
         state.loading = false;
         state.items = action.payload?.status === 404 ? [] : state.items;
@@ -107,53 +110,54 @@ const cartSlice = createSlice({
             : action.payload?.message || action.error.message;
       })
       .addCase(updateCart.pending, (state, action) => {
-  state.error = null;
+        state.error = null;
 
-  const { productId, quantity } = action.meta.arg;
+        const { productId, quantity } = action.meta.arg;
 
-  state.updatingProductId = productId;
+        state.updatingProductId = productId;
 
-  const item = state.items.find(
-    (item) => item.product?._id === productId
-  );
+        const item = state.items.find(
+          (item) => item.product?._id === productId,
+        );
 
-  if (item) {
-    item.quantity = quantity;
-  }
-})
-     .addCase(updateCart.fulfilled, (state, action) => {
-  state.updatingProductId = null;
+        if (item) {
+          item.quantity = quantity;
+        }
+      })
+      .addCase(updateCart.fulfilled, (state, action) => {
+        state.updatingProductId = null;
 
-  if (action.payload.cart?.items) {
-    state.items = action.payload.cart.items;
-  }
-})
+        if (action.payload.cart?.items) {
+          state.items = action.payload.cart.items;
+        }
+      })
       .addCase(updateCart.rejected, (state, action) => {
         state.updatingProductId = null;
         state.error = action.payload?.message || action.error.message;
       })
-  .addCase(removeItem.pending, (state, action) => {
-  state.error = null;
+      .addCase(removeItem.pending, (state, action) => {
+        state.error = null;
 
-  const productId = action.meta.arg;
+        const productId = action.meta.arg;
 
-  state.removingProductId = productId;
+        state.removingProductId = productId;
 
-  state.items = state.items.filter(
-    (item) => item.product?._id !== productId
-  );
-})
-     .addCase(removeItem.fulfilled, (state, action) => {
-  state.removingProductId = null;
+        state.items = state.items.filter(
+          (item) => item.product?._id !== productId,
+        );
+      })
+      .addCase(removeItem.fulfilled, (state, action) => {
+        state.removingProductId = null;
 
-  if (action.payload.cart?.items) {
-    state.items = action.payload.cart.items;
-  }
-})
+        if (action.payload.cart?.items) {
+          state.items = action.payload.cart.items;
+        }
+      })
       .addCase(removeItem.rejected, (state, action) => {
         state.removingProductId = null;
         state.error = action.payload?.message || action.error.message;
       });
+      
   },
 });
 

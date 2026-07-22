@@ -115,16 +115,13 @@ const Profile = () => {
             </div>
           </div>
 
-                   <div className="flex flex-wrap gap-4 mt-10">
-
+          <div className="flex flex-wrap gap-4 mt-10">
             <button
               type="button"
               className="bg-blue-600 text-white px-6 py-3 rounded-lg cursor-default"
             >
               Edit Profile
-              <span className="ml-2 text-xs">
-                (Coming Soon)
-              </span>
+              <span className="ml-2 text-xs">(Coming Soon)</span>
             </button>
 
             <button
@@ -132,9 +129,7 @@ const Profile = () => {
               className="bg-gray-700 text-white px-6 py-3 rounded-lg cursor-default"
             >
               Change Password
-              <span className="ml-2 text-xs">
-                (Coming Soon)
-              </span>
+              <span className="ml-2 text-xs">(Coming Soon)</span>
             </button>
 
             <Link
@@ -143,16 +138,11 @@ const Profile = () => {
             >
               Continue Shopping
             </Link>
-
           </div>
-
         </div>
-
       </div>
-
     </MainLayout>
   );
 };
 
 export default Profile;
-   

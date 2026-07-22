@@ -37,6 +37,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: "",
+       match: [/^[6-9]\d{9}$/, "Please enter a valid phone number"],
     },
 
     isVerified: {
@@ -98,6 +99,7 @@ resetOtpExpire: {
     pincode: {
       type: String,
       default: "",
+        match: [/^\d{6}$/, "Please enter a valid pincode"],
     },
   },
   {
