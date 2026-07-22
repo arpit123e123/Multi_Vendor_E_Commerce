@@ -37,9 +37,7 @@ const register = async (req, res) => {
     }
 
     // Prevent admin registration from frontend
-    if (!["user", "vendor"].includes(role)) {
-      role = "user";
-    }
+  
     if (!["customer", "vendor"].includes(role)) {
       role = "customer";
     }
