@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import MainLayout from "../../layouts/MainLayout";
 import couponService from "../../services/couponService";
 import { toast } from "react-hot-toast";
 
 function Coupons() {
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
 
   const [form, setForm] = useState({
     code: "",
@@ -77,87 +77,105 @@ function Coupons() {
   };
 
   return (
-    <MainLayout>
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <h1 className="text-4xl font-bold mb-8">🎟 Coupon Management</h1>
+    <div className="max-w-7xl mx-auto px-6 py-8">
+      <h1 className="text-4xl font-bold mb-8">🎟 Coupon Management</h1>
 
-        <form
-          onSubmit={createCoupon}
-          className="bg-white shadow rounded-xl p-6 grid md:grid-cols-5 gap-4"
+      <form
+        onSubmit={createCoupon}
+        className="bg-white shadow rounded-xl p-6 grid md:grid-cols-5 gap-4"
+      >
+        <input
+          name="code"
+          value={form.code}
+          onChange={handleChange}
+          placeholder="Coupon Code"
+          className="border rounded-lg p-3"
+          required
+        />
+
+        <select
+          name="discountType"
+          value={form.discountType}
+          onChange={handleChange}
+          className="border rounded-lg p-3"
         >
-          <input
-            name="code"
-            value={form.code}
-            onChange={handleChange}
-            placeholder="Coupon Code"
-            className="border rounded-lg p-3"
-            required
-          />
+          <option value="PERCENTAGE">Percentage</option>
+          <option value="FLAT">Flat</option>
+        </select>
 
-          <select
-            name="discountType"
-            value={form.discountType}
-            onChange={handleChange}
-            className="border rounded-lg p-3"
-          >
-            <option value="PERCENTAGE">Percentage</option>
-            <option value="FLAT">Flat</option>
-          </select>
+        <input
+          type="number"
+          name="discountValue"
+          value={form.discountValue}
+          onChange={handleChange}
+          placeholder="Discount"
+          className="border rounded-lg p-3"
+          required
+        />
 
-          <input
-            type="number"
-            name="discountValue"
-            value={form.discountValue}
-            onChange={handleChange}
-            placeholder="Discount"
-            className="border rounded-lg p-3"
-            required
-          />
+        <input
+          type="number"
+          name="minimumAmount"
+          value={form.minimumAmount}
+          onChange={handleChange}
+          placeholder="Minimum Amount"
+          className="border rounded-lg p-3"
+        />
 
-          <input
-            type="number"
-            name="minimumAmount"
-            value={form.minimumAmount}
-            onChange={handleChange}
-            placeholder="Minimum Amount"
-            className="border rounded-lg p-3"
-          />
+        <input
+          type="date"
+          name="expiryDate"
+          value={form.expiryDate}
+          onChange={handleChange}
+          className="border rounded-lg p-3"
+          required
+        />
 
-          <input
-            type="date"
-            name="expiryDate"
-            value={form.expiryDate}
-            onChange={handleChange}
-            className="border rounded-lg p-3"
-            required
-          />
+        <button className="md:col-span-5 bg-blue-600 text-white rounded-lg py-3 hover:bg-blue-700">
+          Create Coupon
+        </button>
+      </form>
+      <div className="flex justify-between items-center mt-8 mb-4">
+        <input
+          type="text"
+          placeholder="Search coupon..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="border rounded-lg px-4 py-2 w-80"
+        />
 
-          <button className="md:col-span-5 bg-blue-600 text-white rounded-lg py-3 hover:bg-blue-700">
-            Create Coupon
-          </button>
-        </form>
+        <button
+          onClick={fetchCoupons}
+          className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
+        >
+          Refresh
+        </button>
+      </div>
+      <div className="mt-10 bg-white shadow rounded-xl overflow-hidden">
+        {loading ? (
+          <p className="p-6">Loading...</p>
+        ) : coupons.length === 0 ? (
+          <p className="p-6">No Coupons Found</p>
+        ) : (
+          <table className="w-full">
+            <thead className="bg-gray-100">
+              <tr>
+                <th className="p-4 text-left">Code</th>
+                <th className="p-4">Type</th>
+                <th className="p-4">Discount</th>
+                <th className="p-4">Minimum</th>
+                <th className="p-4">Expiry</th>
+                <th className="p-4">Status</th>
+                <th className="p-4">Action</th>
+              </tr>
+            </thead>
 
-        <div className="mt-10 bg-white shadow rounded-xl overflow-hidden">
-          {loading ? (
-            <p className="p-6">Loading...</p>
-          ) : coupons.length === 0 ? (
-            <p className="p-6">No Coupons Found</p>
-          ) : (
-            <table className="w-full">
-              <thead className="bg-gray-100">
-                <tr>
-                  <th className="p-4 text-left">Code</th>
-                  <th className="p-4">Type</th>
-                  <th className="p-4">Discount</th>
-                  <th className="p-4">Minimum</th>
-                  <th className="p-4">Expiry</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4">Action</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {coupons.map((coupon) => (
+            <tbody>
+              {coupons
+                .filter((coupon) =>
+                  coupon.code.toLowerCase().includes(search.toLowerCase()),
+                )
+                .map((coupon) => (
                   <tr key={coupon._id} className="border-t">
                     <td className="p-4 font-semibold">{coupon.code}</td>
 
@@ -197,12 +215,11 @@ function Coupons() {
                     </td>
                   </tr>
                 ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+            </tbody>
+          </table>
+        )}
       </div>
-    </MainLayout>
+    </div>
   );
 }
 

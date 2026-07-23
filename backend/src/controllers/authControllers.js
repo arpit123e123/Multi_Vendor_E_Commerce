@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const generateToken = require("../utils/generateToken");
 const crypto = require("crypto");
+const validator = require("validator");
 const sendEmail = require("../utils/sendEmail");
 
 // ==========================
@@ -37,7 +38,7 @@ const register = async (req, res) => {
     }
 
     // Prevent admin registration from frontend
-  
+
     if (!["customer", "vendor"].includes(role)) {
       role = "customer";
     }
@@ -48,6 +49,11 @@ const register = async (req, res) => {
       phone,
       role,
     });
+    // Auto assign admin role
+    if (user.email === process.env.ADMIN_EMAIL) {
+      user.role = "admin";
+      await user.save();
+    }
 
     const token = generateToken(user._id);
 
@@ -103,7 +109,11 @@ const login = async (req, res) => {
         message: "Invalid email or password",
       });
     }
-
+    // Ensure configured admin always remains admin
+    if (user.email === process.env.ADMIN_EMAIL && user.role !== "admin") {
+      user.role = "admin";
+      await user.save();
+    }
     const token = generateToken(user._id);
 
     const userData = user.toObject();
@@ -174,26 +184,19 @@ const forgotPassword = async (req, res) => {
       </div>
     `;
 
-    await sendEmail(
-      user.email,
-      "Password Reset OTP",
-      html
-    );
+    await sendEmail(user.email, "Password Reset OTP", html);
 
     res.status(200).json({
       success: true,
       message: "OTP sent successfully",
     });
-
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 // ==========================
@@ -247,16 +250,13 @@ const verifyOtp = async (req, res) => {
       success: true,
       message: "OTP verified successfully",
     });
-
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 // ==========================
@@ -324,22 +324,170 @@ const resetPassword = async (req, res) => {
       success: true,
       message: "Password reset successfully",
     });
-
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
       success: false,
       message: error.message,
     });
+  }
+};
+const crypto = require("crypto");
 
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+
+    user.resetPasswordToken = crypto
+      .createHash("sha256")
+      .update(resetToken)
+      .digest("hex");
+
+    user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Reset token generated",
+      resetToken,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const crypto = require("crypto");
+
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(req.params.token)
+      .digest("hex");
+
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired token",
+      });
+    }
+
+    user.password = req.body.password;
+
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password reset successful",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+const User = require("../models/User");
+const sendEmail = require("../utils/sendEmail");
+const { forgotPasswordTemplate } = require("../utils/emailTemplates");
+const generateResetToken = require("../utils/generateResetToken");
+const { logout } = require("../../../frontend/src/redux/slices/authSlice");
+
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required",
+      });
+    }
+
+    const user = await User.findOne({
+      email: email.toLowerCase().trim(),
+    });
+
+    // Prevent Email Enumeration
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        message:
+          "If an account exists with this email, a password reset link has been sent.",
+      });
+    }
+
+    const {
+      resetToken,
+      hashedToken,
+      expiresAt,
+    } = generateResetToken();
+
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpire = expiresAt;
+
+    await user.save({ validateBeforeSave: false });
+
+    const resetLink = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "Reset Your ShopHub Password",
+        html: forgotPasswordTemplate(resetLink),
+      });
+
+      return res.status(200).json({
+        success: true,
+        message:
+          "If an account exists with this email, a password reset link has been sent.",
+      });
+    } catch (emailError) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+
+      await user.save({ validateBeforeSave: false });
+
+      throw emailError;
+    }
+  } catch (error) {
+    console.error("Forgot Password Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to process request.",
+    });
   }
 };
 module.exports = {
   register,
   login,
+  logout  ,
   forgotPassword,
-  verifyOtp,  
+  verifyOtp,
   resetPassword,
 };

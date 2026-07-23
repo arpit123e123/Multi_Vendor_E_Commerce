@@ -4,6 +4,7 @@ const router = express.Router();
 const {
   register,
   login,
+  logout,
   forgotPassword,
   verifyOtp,
   resetPassword,
@@ -13,7 +14,7 @@ const {
 router.post("/register", register);
 
 // Login
-router.post("/login", login);
+router.post("/login", login); 
 
 // Forgot Password
 router.post("/forgot-password", forgotPassword);

@@ -9,6 +9,7 @@ const {
   getVendorRequests,
   approveVendor,
   rejectVendor,
+  suspendVendor,
 } = require("../controllers/vendorController");
 
 // =========================
@@ -33,5 +34,11 @@ router.put("/approve/:id", protect, authorize("admin"), approveVendor);
 
 // Reject vendor
 router.put("/reject/:id", protect, authorize("admin"), rejectVendor);
+router.patch(
+  "/suspend/:id",
+  protect,
+  authorize("admin"),
+  suspendVendor
+);
 
 module.exports = router;

@@ -1,146 +1,179 @@
-import { useEffect, useState } from "react";
-import MainLayout from "../../layouts/MainLayout";
+import { useEffect, useMemo, useState } from "react";
 import api from "../../services/axios";
 import { toast } from "react-hot-toast";
 
 function Users() {
-
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
-
   const fetchUsers = async () => {
     try {
-
       setLoading(true);
 
       const { data } = await api.get("/admin/users");
 
       setUsers(data.users || []);
-
     } catch (error) {
-
-      console.error(error);
-
-      toast.error(
-        error.response?.data?.message ||
-        "Failed to fetch users"
-      );
-
+      toast.error(error.response?.data?.message || "Failed to fetch users");
     } finally {
-
       setLoading(false);
-
     }
   };
 
+  const filteredUsers = useMemo(() => {
+    return users.filter(
+      (user) =>
+        user.name?.toLowerCase().includes(search.toLowerCase()) ||
+        user.email?.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [users, search]);
+
+  const handleBlock = async (id, isBlocked) => {
+    try {
+      await api.patch(`/admin/users/${id}`, {
+        isBlocked: !isBlocked,
+      });
+
+      toast.success(
+        !isBlocked ? "User blocked successfully" : "User unblocked successfully"
+      );
+
+      fetchUsers();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Something went wrong");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this user?")) return;
+
+    try {
+      await api.delete(`/admin/users/${id}`);
+
+      toast.success("User deleted");
+
+      fetchUsers();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Delete failed");
+    }
+  };
 
   return (
-    <MainLayout>
+    <div className="max-w-7xl mx-auto p-6">
 
-      <div className="max-w-7xl mx-auto px-6 py-10">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Users Management</h1>
 
-        <h1 className="text-4xl font-bold mb-8">
-          👥 Manage Users
-        </h1>
+        <button
+          onClick={fetchUsers}
+          className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700"
+        >
+          Refresh
+        </button>
+      </div>
 
+      <input
+        type="text"
+        placeholder="Search user..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="border rounded-lg px-4 py-2 w-full mb-6"
+      />
 
-        {loading ? (
+      {loading ? (
+        <div className="text-center py-10 text-lg">
+          Loading...
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl shadow overflow-x-auto">
 
-          <p className="text-xl">
-            Loading users...
-          </p>
+          <table className="min-w-full">
 
-        ) : users.length === 0 ? (
+            <thead className="bg-gray-100">
 
-          <div className="bg-white shadow rounded-xl p-10 text-center">
-            No Users Found
-          </div>
+              <tr>
 
-        ) : (
+                <th className="p-4 text-left">Name</th>
 
-          <div className="bg-white shadow rounded-xl overflow-hidden">
+                <th className="p-4 text-left">Email</th>
 
-            <table className="w-full">
+                <th className="p-4 text-left">Role</th>
 
-              <thead className="bg-gray-100">
+                <th className="p-4 text-left">Status</th>
 
-                <tr>
+                <th className="p-4 text-center">Actions</th>
 
-                  <th className="p-4 text-left">
-                    Name
-                  </th>
+              </tr>
 
-                  <th className="p-4 text-left">
-                    Email
-                  </th>
+            </thead>
 
-                  <th className="p-4 text-left">
-                    Role
-                  </th>
+            <tbody>
 
-                  <th className="p-4 text-left">
-                    Status
-                  </th>
+              {filteredUsers.map((user) => (
 
-                </tr>
+                <tr key={user._id} className="border-t hover:bg-gray-50">
 
-              </thead>
+                  <td className="p-4">{user.name}</td>
 
+                  <td className="p-4">{user.email}</td>
 
-              <tbody>
+                  <td className="p-4 capitalize">{user.role}</td>
 
-                {users.map((user)=>(
+                  <td className="p-4">
 
-                  <tr
-                    key={user._id}
-                    className="border-t"
-                  >
-
-                    <td className="p-4">
-                      {user.name}
-                    </td>
-
-
-                    <td className="p-4">
-                      {user.email}
-                    </td>
-
-
-                    <td className="p-4 capitalize">
-                      {user.role}
-                    </td>
-
-
-                    <td className="p-4">
-
+                    {user.isBlocked ? (
+                      <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm">
+                        Blocked
+                      </span>
+                    ) : (
                       <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm">
                         Active
                       </span>
+                    )}
 
-                    </td>
+                  </td>
 
+                  <td className="p-4 flex gap-2 justify-center">
 
-                  </tr>
+                    <button
+                      onClick={() =>
+                        handleBlock(user._id, user.isBlocked)
+                      }
+                      className={`px-3 py-1 rounded text-white ${
+                        user.isBlocked
+                          ? "bg-green-600"
+                          : "bg-yellow-600"
+                      }`}
+                    >
+                      {user.isBlocked ? "Unblock" : "Block"}
+                    </button>
 
-                ))}
+                    <button
+                      onClick={() => handleDelete(user._id)}
+                      className="bg-red-600 text-white px-3 py-1 rounded"
+                    >
+                      Delete
+                    </button>
 
-              </tbody>
+                  </td>
 
-            </table>
+                </tr>
 
-          </div>
+              ))}
 
-        )}
+            </tbody>
 
-      </div>
+          </table>
 
-    </MainLayout>
+        </div>
+      )}
+
+    </div>
   );
 }
 

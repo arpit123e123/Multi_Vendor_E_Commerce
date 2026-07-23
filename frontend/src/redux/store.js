@@ -7,7 +7,7 @@ import wishlistReducer from "./slices/wishlistSlice";
 import orderReducer from "./slices/orderSlice";
 import addressReducer from "./slices/addressSlice";
 import userReducer from "./slices/userSlice";
-
+import vendorReducer from "./slices/vendorSlice";
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -18,5 +18,6 @@ export const store = configureStore({
     address: addressReducer,
     coupon: couponReducer,
     user: userReducer,
+    vendor: vendorReducer,
   },
 });

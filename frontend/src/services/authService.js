@@ -47,5 +47,27 @@ export const resetPassword = async (email, otp, password) => {
 
   return data;
 };
+import api from "./axios";
+
+export const forgotPassword = async (email) => {
+  const { data } = await api.post("/auth/forgot-password", { email });
+  return data;
+};
+
+export const resetPassword = async (
+  token,
+  password,
+  confirmPassword
+) => {
+  const { data } = await api.post(
+    `/auth/reset-password/${token}`,
+    {
+      password,
+      confirmPassword,
+    }
+  );
+
+  return data;
+};
 
 export default authService;

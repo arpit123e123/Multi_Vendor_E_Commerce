@@ -37,22 +37,34 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: "",
-       match: [/^[6-9]\d{9}$/, "Please enter a valid phone number"],
+      match: [/^[6-9]\d{9}$/, "Please enter a valid phone number"],
     },
 
     isVerified: {
       type: Boolean,
       default: false,
     },
-resetOtp: {
-  type: String,
-  default: null,
-},
+    resetPasswordToken: {
+      type: String,
+    },
 
-resetOtpExpire: {
-  type: Date,
-  default: null,
-},
+    resetPasswordExpire: {
+      type: Date,
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
+
+    resetOtp: {
+      type: String,
+      default: null,
+    },
+
+    resetOtpExpire: {
+      type: Date,
+      default: null,
+    },
     vendorRequest: {
       type: String,
       enum: ["none", "pending", "approved", "rejected"],
@@ -70,7 +82,13 @@ resetOtpExpire: {
       default: "",
       trim: true,
     },
+    emailVerificationToken: {
+      type: String,
+    },
 
+    emailVerificationExpire: {
+      type: Date,
+    },
     shopLogo: {
       type: String,
       default: "",
@@ -99,22 +117,22 @@ resetOtpExpire: {
     pincode: {
       type: String,
       default: "",
-        match: [/^\d{6}$/, "Please enter a valid pincode"],
+      match: [/^\d{6}$/, "Please enter a valid pincode"],
     },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Hash Password
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) {
+    return;
+  }
 
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
-
-  next();
 });
 
 // Compare Password

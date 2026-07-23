@@ -19,7 +19,9 @@ import Categories from "../pages/admin/Categories";
 import AdminOrders from "../pages/admin/Orders";
 import Users from "../pages/admin/Users";
 import Vendors from "../pages/admin/Vendors";
+import AdminLayout from "../components/admin/AdminLayout";
 import Coupons from "../pages/admin/Coupons";
+import Settings from "../pages/admin/Settings";
 
 // Vendor Pages
 import VendorDashboard from "../pages/vendor/Dashboard";
@@ -93,78 +95,32 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-<Route
-  path="/profile"
-  element={
-    <ProtectedRoute>
-      <Profile />
-    </ProtectedRoute>
-  }
-/>
+
         {/* ================= ADMIN ================= */}
 
         <Route
           path="/admin"
           element={
             <ProtectedRoute role="admin">
-              <Dashboard />
+              <AdminLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          <Route path="settings" element={<Settings />} />
+          <Route index element={<Dashboard />} />
 
-        <Route
-          path="/admin/products"
-          element={
-            <ProtectedRoute role="admin">
-              <AdminProducts />
-            </ProtectedRoute>
-          }
-        />
+          <Route path="users" element={<Users />} />
 
-        <Route
-          path="/admin/categories"
-          element={
-            <ProtectedRoute role="admin">
-              <Categories />
-            </ProtectedRoute>
-          }
-        />
+          <Route path="vendors" element={<Vendors />} />
 
-        <Route
-          path="/admin/orders"
-          element={
-            <ProtectedRoute role="admin">
-              <AdminOrders />
-            </ProtectedRoute>
-          }
-        />
+          <Route path="products" element={<AdminProducts />} />
 
-        <Route
-          path="/admin/users"
-          element={
-            <ProtectedRoute role="admin">
-              <Users />
-            </ProtectedRoute>
-          }
-        />
+          <Route path="categories" element={<Categories />} />
 
-        <Route
-          path="/admin/vendors"
-          element={
-            <ProtectedRoute role="admin">
-              <Vendors />
-            </ProtectedRoute>
-          }
-        />
+          <Route path="orders" element={<AdminOrders />} />
 
-        <Route
-          path="/admin/coupons"
-          element={
-            <ProtectedRoute role="admin">
-              <Coupons />
-            </ProtectedRoute>
-          }
-        />
+          <Route path="coupons" element={<Coupons />} />
+        </Route>
 
         {/* ================= VENDOR ================= */}
 

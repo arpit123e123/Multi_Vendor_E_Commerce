@@ -1,26 +1,26 @@
-const nodemailer = require("nodemailer");
+const { transporter } = require("../config/mail");
 
-const sendEmail = async (to, subject, html) => {
+const sendEmail = async ({ to, subject, html, text = "" }) => {
   try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+    const info = await transporter.sendMail({
+      from: {
+        name: process.env.MAIL_FROM_NAME,
+        address: process.env.MAIL_FROM,
       },
-    });
-
-    await transporter.sendMail({
-      from: `"Multi Vendor E-Commerce" <${process.env.EMAIL_USER}>`,
       to,
       subject,
+      text,
       html,
     });
 
-    console.log("✅ Email sent successfully");
+    console.log(`✅ Email sent successfully to ${to}`);
+    console.log(`📧 Message ID: ${info.messageId}`);
+
+    return info;
   } catch (error) {
-    console.log("❌ Email Error:", error.message);
-    throw error;
+    console.error("❌ Email Error:", error);
+
+    throw new Error("Failed to send email");
   }
 };
 
