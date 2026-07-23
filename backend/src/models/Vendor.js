@@ -31,15 +31,16 @@ const vendorSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-
-    isApproved: {
-      type: Boolean,
-      default: false,
+    status: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
     },
+    
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("Vendor", vendorSchema);

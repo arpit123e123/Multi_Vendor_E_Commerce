@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import MainLayout from "../../layouts/MainLayout";
 import ProductCard from "../../components/common/ProductCard";
 import { getProducts } from "../../services/productService";
-
+import { useSearchParams } from "react-router-dom";
 function Products() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,22 +24,23 @@ function Products() {
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [search, sort, page, minPrice, maxPrice, rating, inStock]);
+  }, [search, sort, page, minPrice, maxPrice, rating, inStock, category]);
 
  const fetchProducts = async () => {
   try {
     setLoading(true);
 
-    const res = await getProducts({
-      keyword: search,
-      sort,
-      page,
-      limit: 12,
-      minPrice,
-      maxPrice,
-      minRating: rating,
-      inStock,
-    });
+   const res = await getProducts({
+  keyword: search,
+  category,
+  sort,
+  page,
+  limit: 12,
+  minPrice,
+  maxPrice,
+  minRating: rating,
+  inStock,
+});
 
     alert(JSON.stringify(res));
     console.log(res);
@@ -54,6 +55,9 @@ function Products() {
 
     setLoading(false);
   }
+  const [searchParams] = useSearchParams();
+
+const category = searchParams.get("category");
 };
 
   return (

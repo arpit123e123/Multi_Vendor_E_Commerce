@@ -1,17 +1,17 @@
 const User = require("../models/User");
-
+const Vendor = require("../models/Vendor");
 /* ===========================
    Become Vendor
 =========================== */
 
 const becomeVendor = async (req, res) => {
   try {
-    const { shopName, shopDescription, address, city, state, country, pincode } = req.body;
+    const { shopName, description, address, phone, logo } = req.body;
 
-    if (!shopName) {
+    if (!shopName || !address || !phone) {
       return res.status(400).json({
         success: false,
-        message: "Shop name is required",
+        message: "Shop name, address and phone are required",
       });
     }
 
@@ -24,6 +24,7 @@ const becomeVendor = async (req, res) => {
       });
     }
 
+    // Already approved vendor
     if (user.role === "vendor") {
       return res.status(400).json({
         success: false,
@@ -31,29 +32,32 @@ const becomeVendor = async (req, res) => {
       });
     }
 
-    if (user.vendorRequest === "pending") {
+    // Existing request
+    const existingVendor = await Vendor.findOne({
+      owner: user._id,
+    });
+
+    if (existingVendor) {
       return res.status(400).json({
         success: false,
-        message: "Vendor request already pending",
+        message: `Vendor request already ${existingVendor.status}`,
       });
     }
 
-    user.shopName = shopName;
-    user.shopDescription = shopDescription || "";
-    user.address = address || "";
-    user.city = city || "";
-    user.state = state || "";
-    user.country = country || "India";
-    user.pincode = pincode || "";
+    const vendor = await Vendor.create({
+      owner: user._id,
+      shopName,
+      description,
+      address,
+      phone,
+      logo,
+      status: "pending",
+    });
 
-    user.vendorRequest = "pending";
-
-    await user.save();
-
-    res.status(200).json({
+    res.status(201).json({
       success: true,
       message: "Vendor request submitted successfully",
-      user,
+      vendor,
     });
   } catch (error) {
     console.error(error);
@@ -71,12 +75,14 @@ const becomeVendor = async (req, res) => {
 
 const getVendorProfile = async (req, res) => {
   try {
-    const vendor = await User.findById(req.user.id).select("-password");
+    const vendor = await Vendor.findOne({
+      owner: req.user.id,
+    }).populate("owner", "name email");
 
     if (!vendor) {
       return res.status(404).json({
         success: false,
-        message: "Vendor not found",
+        message: "Vendor profile not found",
       });
     }
 
@@ -91,8 +97,81 @@ const getVendorProfile = async (req, res) => {
     });
   }
 };
+const getVendorRequests = async (req, res) => {
+  try {
+    const vendors = await Vendor.find({ status: "pending" }).populate(
+      "owner",
+      "name email",
+    );
 
+    res.status(200).json({
+      success: true,
+      vendors,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+const approveVendor = async (req, res) => {
+  try {
+    const vendor = await Vendor.findById(req.params.id);
+
+    if (!vendor) {
+      return res.status(404).json({
+        success: false,
+        message: "Vendor not found",
+      });
+    }
+
+    vendor.status = "approved";
+    await vendor.save();
+    const user = await User.findById(vendor.owner);
+    user.role = "vendor";
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Vendor approved successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+const rejectVendor = async (req, res) => {
+  try {
+    const vendor = await Vendor.findById(req.params.id);
+
+    if (!vendor) {
+      return res.status(404).json({
+        success: false,
+        message: "Vendor not found",
+      });
+    }
+
+    vendor.status = "rejected";
+    await vendor.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Vendor request rejected",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 module.exports = {
   becomeVendor,
   getVendorProfile,
+  getVendorRequests,
+  approveVendor,
+  rejectVendor,
 };
