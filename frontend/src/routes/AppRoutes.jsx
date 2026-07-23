@@ -28,11 +28,10 @@ import VendorDashboard from "../pages/vendor/Dashboard";
 import AddProduct from "../pages/vendor/AddProduct";
 import VendorProducts from "../pages/vendor/Products";
 import VendorOrders from "../pages/vendor/Orders";
-
+import BecomeVendor from "../pages/vendor/BecomeVendor";
 import ProtectedRoute from "../components/ProtectedRoute";
 
 import ForgotPassword from "../pages/Auth/ForgotPassword";
-import VerifyOtp from "../pages/Auth/VerifyOtp";
 import ResetPassword from "../pages/Auth/ResetPassword";
 
 function AppRoutes() {
@@ -132,7 +131,14 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
+        <Route
+          path="/become-vendor"
+          element={
+            <ProtectedRoute>
+              <BecomeVendor />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/vendor/add-product"
           element={
@@ -161,8 +167,6 @@ function AppRoutes() {
         />
 
         <Route path="/forgot-password" element={<ForgotPassword />} />
-
-        <Route path="/verify-otp" element={<VerifyOtp />} />
 
         <Route path="/reset-password" element={<ResetPassword />} />
       </Routes>

@@ -4,13 +4,19 @@ import {
   getProfile,
   updateProfile,
   changePassword,
+  clearUserState,
 } from "../redux/slices/userSlice";
 import MainLayout from "../layouts/MainLayout";
 
 const Profile = () => {
   const dispatch = useDispatch();
 
-  const { user } = useSelector((state) => state.user);
+  const {
+    user,
+    loading,
+    success,
+    error,
+  } = useSelector((state) => state.user);
 
   const [form, setForm] = useState({
     name: "",
@@ -25,6 +31,7 @@ const Profile = () => {
   const [password, setPassword] = useState({
     currentPassword: "",
     newPassword: "",
+    confirmPassword: "",
   });
 
   useEffect(() => {
@@ -45,151 +52,241 @@ const Profile = () => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (success) {
+      alert(success);
+      dispatch(clearUserState());
+    }
+
+    if (error) {
+      alert(error);
+      dispatch(clearUserState());
+    }
+  }, [success, error, dispatch]);
+
   const handleProfile = (e) => {
     e.preventDefault();
+
     dispatch(updateProfile(form));
   };
 
   const handlePassword = (e) => {
     e.preventDefault();
-    if (!password.currentPassword || !password.newPassword) {
-  return;
-}
 
-if (password.newPassword.length < 6) {
-  return;
-}
+    if (
+      !password.currentPassword ||
+      !password.newPassword ||
+      !password.confirmPassword
+    ) {
+      return alert("All fields are required");
+    }
+
+    if (password.newPassword.length < 6) {
+      return alert("Password must be at least 6 characters");
+    }
+
+    if (
+      password.newPassword !==
+      password.confirmPassword
+    ) {
+      return alert("Passwords do not match");
+    }
+
     dispatch(changePassword(password));
+
+    setPassword({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
   };
 
   return (
-    <MainLayout>
-      <div className="max-w-3xl mx-auto py-10">
+   <div className="max-w-4xl mx-auto py-10 px-4">
 
-        <h1 className="text-3xl font-bold mb-8">
-          My Profile
-        </h1>
+  <h1 className="text-3xl font-bold mb-8">
+    My Profile
+  </h1>
 
-        <form
-          onSubmit={handleProfile}
-          className="space-y-4"
-        >
+  <div className="bg-white rounded-lg shadow-md p-6 mb-10">
 
-          <input
-            className="border p-3 w-full"
-            placeholder="Name"
-            value={form.name}
-            onChange={(e)=>
-              setForm({...form,name:e.target.value})
-            }
-          />
+    <h2 className="text-xl font-semibold mb-5">
+      Edit Profile
+    </h2>
 
-          <input
-            className="border p-3 w-full"
-            placeholder="Phone"
-            value={form.phone}
-            maxLength={10}
-            onChange={(e)=>
-              setForm({...form,phone:e.target.value})
-            }
-          />
+    <form
+      onSubmit={handleProfile}
+      className="space-y-4"
+    >
 
-          <input
-            className="border p-3 w-full"
-            placeholder="Address"
-            value={form.address}
-            onChange={(e)=>
-              setForm({...form,address:e.target.value})
-            }
-          />
+      <input
+        className="border rounded p-3 w-full"
+        placeholder="Name"
+        value={form.name}
+        onChange={(e)=>
+          setForm({
+            ...form,
+            name:e.target.value
+          })
+        }
+      />
 
-          <input
-            className="border p-3 w-full"
-            placeholder="City"
-            value={form.city}
-            onChange={(e)=>
-              setForm({...form,city:e.target.value})
-            }
-          />
+      <input
+        className="border rounded p-3 w-full"
+        placeholder="Phone"
+        value={form.phone}
+        maxLength={10}
+        onChange={(e)=>
+          setForm({
+            ...form,
+            phone:e.target.value
+          })
+        }
+      />
 
-          <input
-            className="border p-3 w-full"
-            placeholder="State"
-            value={form.state}
-            onChange={(e)=>
-              setForm({...form,state:e.target.value})
-            }
-          />
+      <input
+        className="border rounded p-3 w-full"
+        placeholder="Address"
+        value={form.address}
+        onChange={(e)=>
+          setForm({
+            ...form,
+            address:e.target.value
+          })
+        }
+      />
 
-          <input
-            className="border p-3 w-full"
-            placeholder="Country"
-            value={form.country}
-            onChange={(e)=>
-              setForm({...form,country:e.target.value})
-            }
-          />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-          <input
-            className="border p-3 w-full"
-            placeholder="Pincode"
-            value={form.pincode}
-            maxLength={6}
-            onChange={(e)=>
-              setForm({...form,pincode:e.target.value})
-            }
-          />
+        <input
+          className="border rounded p-3"
+          placeholder="City"
+          value={form.city}
+          onChange={(e)=>
+            setForm({
+              ...form,
+              city:e.target.value
+            })
+          }
+        />
 
-          <button
-  type="submit"
-  disabled={loading}
-  className="bg-blue-600 text-white px-6 py-3 rounded disabled:opacity-50"
->
-  {loading ? "Updating..." : "Update Profile"}
-</button>
-        </form>
-
-        <hr className="my-10"/>
-
-        <form
-          onSubmit={handlePassword}
-          className="space-y-4"
-        >
-
-          <input
-            type="password"
-            className="border p-3 w-full"
-            placeholder="Current Password"
-            onChange={(e)=>
-              setPassword({
-                ...password,
-                currentPassword:e.target.value
-              })
-            }
-          />
-
-          <input
-            type="password"
-            className="border p-3 w-full"
-            placeholder="New Password"
-            onChange={(e)=>
-              setPassword({
-                ...password,
-                newPassword:e.target.value
-              })
-            }
-          />
-
-          <button
-            className="bg-green-600 text-white px-6 py-3 rounded"
-          >
-            Change Password
-          </button>
-
-        </form>
+        <input
+          className="border rounded p-3"
+          placeholder="State"
+          value={form.state}
+          onChange={(e)=>
+            setForm({
+              ...form,
+              state:e.target.value
+            })
+          }
+        />
 
       </div>
-    </MainLayout>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <input
+          className="border rounded p-3"
+          placeholder="Country"
+          value={form.country}
+          onChange={(e)=>
+            setForm({
+              ...form,
+              country:e.target.value
+            })
+          }
+        />
+
+        <input
+          className="border rounded p-3"
+          placeholder="Pincode"
+          value={form.pincode}
+          maxLength={6}
+          onChange={(e)=>
+            setForm({
+              ...form,
+              pincode:e.target.value
+            })
+          }
+        />
+
+      </div>
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded disabled:opacity-50"
+      >
+        {loading ? "Updating..." : "Update Profile"}
+      </button>
+
+    </form>
+
+  </div>
+
+  <div className="bg-white rounded-lg shadow-md p-6">
+
+    <h2 className="text-xl font-semibold mb-5">
+      Change Password
+    </h2>
+        <form
+      onSubmit={handlePassword}
+      className="space-y-4"
+    >
+
+      <input
+        type="password"
+        className="border rounded p-3 w-full"
+        placeholder="Current Password"
+        value={password.currentPassword}
+        onChange={(e)=>
+          setPassword({
+            ...password,
+            currentPassword:e.target.value
+          })
+        }
+      />
+
+      <input
+        type="password"
+        className="border rounded p-3 w-full"
+        placeholder="New Password"
+        value={password.newPassword}
+        onChange={(e)=>
+          setPassword({
+            ...password,
+            newPassword:e.target.value
+          })
+        }
+      />
+
+      <input
+        type="password"
+        className="border rounded p-3 w-full"
+        placeholder="Confirm New Password"
+        value={password.confirmPassword}
+        onChange={(e)=>
+          setPassword({
+            ...password,
+            confirmPassword:e.target.value
+          })
+        }
+      />
+
+      <button
+        type="submit"
+        disabled={loading}
+        className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded disabled:opacity-50"
+      >
+        {loading ? "Changing..." : "Change Password"}
+      </button>
+
+    </form>
+
+  </div>
+
+</div>
   );
 };
 

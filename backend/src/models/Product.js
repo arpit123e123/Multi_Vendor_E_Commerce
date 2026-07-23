@@ -12,30 +12,69 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-       minlength: [3, "Product name must be at least 3 characters"],
-  maxlength: [100, "Product name cannot exceed 100 characters"],
+      minlength: [3, "Product name must be at least 3 characters"],
+      maxlength: [100, "Product name cannot exceed 100 characters"],
     },
 
-   description: {
-  type: String,
-  required: true,
-  trim: true,
-  maxlength: [2000, "Description is too long"],
-},
+    description: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: [2000, "Description is too long"],
+    },
 
     price: {
       type: Number,
       required: true,
-        min: [0, "Price cannot be negative"],
+      min: [0, "Price cannot be negative"],
     },
 
     stock: {
       type: Number,
       required: true,
       default: 0,
-        min: [0, "Stock cannot be negative"],
+      min: [0, "Stock cannot be negative"],
+    },
+    brand: {
+      type: String,
+      required: true,
+      trim: true,
     },
 
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+    },
+
+    discountPrice: {
+      type: Number,
+      default: 0,
+    },
+
+    sold: {
+      type: Number,
+      default: 0,
+    },
+
+    isFeatured: {
+      type: Boolean,
+      default: false,
+    },
+
+    status: {
+      type: String,
+      enum: ["active", "draft", "out_of_stock"],
+      default: "active",
+    },
+
+    specifications: [
+      {
+        key: String,
+        value: String,
+      },
+    ],
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
@@ -81,11 +120,17 @@ const productSchema = new mongoose.Schema(
     ],
 
     images: [
-  {
-    public_id: String,
-    url: String,
-  },
-],
+      {
+        public_id: {
+          type: String,
+          required: true,
+        },
+        url: {
+          type: String,
+          required: true,
+        },
+      },
+    ],
 
     isActive: {
       type: Boolean,
@@ -94,7 +139,7 @@ const productSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 module.exports = mongoose.model("Product", productSchema);

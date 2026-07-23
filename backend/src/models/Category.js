@@ -13,6 +13,13 @@ const categorySchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    slug: {
+  type: String,
+  unique: true,
+  required: true,
+  lowercase: true,
+  trim: true,
+},
 
     isActive: {
       type: Boolean,
@@ -23,5 +30,7 @@ const categorySchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+
 
 module.exports = mongoose.model("Category", categorySchema);

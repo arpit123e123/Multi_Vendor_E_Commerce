@@ -21,36 +21,12 @@ const authService = {
     return data;
   },
 };
+
 export const forgotPassword = async (email) => {
   const { data } = await api.post("/auth/forgot-password", {
     email,
   });
 
-  return data;
-};
-
-export const verifyOtp = async (email, otp) => {
-  const { data } = await api.post("/auth/verify-otp", {
-    email,
-    otp,
-  });
-
-  return data;
-};
-
-export const resetPassword = async (email, otp, password) => {
-  const { data } = await api.post("/auth/reset-password", {
-    email,
-    otp,
-    password,
-  });
-
-  return data;
-};
-import api from "./axios";
-
-export const forgotPassword = async (email) => {
-  const { data } = await api.post("/auth/forgot-password", { email });
   return data;
 };
 

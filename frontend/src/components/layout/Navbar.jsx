@@ -81,6 +81,14 @@ function Navbar() {
                   >
                     Logout
                   </button>
+                  {user?.role === "user" && (
+                    <Link
+                      to="/become-vendor"
+                      className="block px-4 py-2 hover:bg-gray-100"
+                    >
+                      Become Vendor
+                    </Link>
+                  )}
                 </div>
               )}
             </div>

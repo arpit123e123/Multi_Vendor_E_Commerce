@@ -59,11 +59,14 @@ function ProductCard({ product }) {
       {/* Image Section */}
 
       <div className="relative">
-        <img
-          src={product.images?.[0] || "https://via.placeholder.com/300"}
-          alt={product.name}
-          className="w-full h-48 object-cover rounded-lg"
-        />
+<img
+  src={
+    product.images?.[0]?.url ||
+    "https://placehold.co/600x600?text=No+Image"
+  }
+  alt={product.name}
+  className="w-full h-48 object-cover rounded-lg"
+/>
 
         {/* Wishlist Heart */}
 

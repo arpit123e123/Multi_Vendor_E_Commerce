@@ -4,9 +4,7 @@ const router = express.Router();
 const {
   register,
   login,
-  logout,
   forgotPassword,
-  verifyOtp,
   resetPassword,
 } = require("../controllers/authControllers");
 
@@ -14,15 +12,12 @@ const {
 router.post("/register", register);
 
 // Login
-router.post("/login", login); 
+router.post("/login", login);
 
-// Forgot Password
+// Forgot Password (Email Link)
 router.post("/forgot-password", forgotPassword);
 
-// Verify OTP
-router.post("/verify-otp", verifyOtp);
-
 // Reset Password
-router.post("/reset-password", resetPassword);
+router.post("/reset-password/:token", resetPassword);
 
 module.exports = router;
