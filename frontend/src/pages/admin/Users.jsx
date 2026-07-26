@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../../services/axios";
 import { toast } from "react-hot-toast";
 
@@ -7,11 +7,7 @@ function Users() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -23,7 +19,13 @@ function Users() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(fetchUsers, 0);
+
+    return () => clearTimeout(timer);
+  }, [fetchUsers]);
 
   const filteredUsers = useMemo(() => {
     return users.filter(

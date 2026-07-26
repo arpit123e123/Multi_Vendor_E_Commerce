@@ -9,6 +9,13 @@ const createPaymentOrder = async (req, res) => {
 
   try {
 
+    if (!razorpay) {
+      return res.status(500).json({
+        success: false,
+        message: "Razorpay credentials are not configured",
+      });
+    }
+
     const { orderId } = req.body;
 
 
@@ -22,6 +29,13 @@ const createPaymentOrder = async (req, res) => {
         message:"Order not found"
       });
 
+    }
+
+    if (dbOrder.paymentStatus === "Paid") {
+      return res.status(400).json({
+        success: false,
+        message: "Order has already been paid",
+      });
     }
 
 
@@ -95,12 +109,6 @@ if (dbOrder.totalAmount <= 0) {
 
 
   }
-  if (dbOrder.paymentStatus === "Paid") {
-  return res.status(400).json({
-    success: false,
-    message: "Order has already been paid",
-  });
-}
 
 };
 
@@ -114,6 +122,13 @@ const verifyPayment = async (req,res)=>{
 
 
   try {
+
+    if (!process.env.RAZORPAY_KEY_SECRET) {
+      return res.status(500).json({
+        success: false,
+        message: "Razorpay credentials are not configured",
+      });
+    }
 
 
     const {

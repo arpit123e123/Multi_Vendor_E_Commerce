@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import MainLayout from "../../layouts/MainLayout";
 import api from "../../services/axios";
 import { toast } from "react-hot-toast";
@@ -8,11 +8,7 @@ function Orders() {
 
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -26,7 +22,13 @@ function Orders() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(fetchOrders, 0);
+
+    return () => clearTimeout(timer);
+  }, [fetchOrders]);
 
   const updateStatus = async (id, status) => {
     try {

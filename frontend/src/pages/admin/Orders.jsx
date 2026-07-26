@@ -1,18 +1,23 @@
-import { useEffect, useState } from "react";
-import MainLayout from "../../layouts/MainLayout";
+import { useCallback, useEffect, useState } from "react";
 import api from "../../services/axios";
 import { toast } from "react-hot-toast";
+
+const statusList = [
+  "Placed",
+  "Confirmed",
+  "Packed",
+  "Shipped",
+  "Out For Delivery",
+  "Delivered",
+  "Cancelled",
+];
 
 function Orders() {
   const [orders, setOrders] = useState([]);
 
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -26,51 +31,30 @@ function Orders() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(fetchOrders, 0);
+
+    return () => clearTimeout(timer);
+  }, [fetchOrders]);
+
+  const updateStatus = async (id, status) => {
+    try {
+      await api.patch(`/admin/orders/${id}`, {
+        status,
+      });
+
+      toast.success("Order status updated");
+
+      fetchOrders();
+    } catch (error) {
+      console.error(error);
+
+      toast.error(error.response?.data?.message || "Update failed");
+    }
   };
-const updateOrderStatus = async (req, res) => {
-  try {
-    const { status } = req.body;
 
-    const order = await Order.findById(req.params.id);
-
-    if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: "Order not found",
-      });
-    }
-
-    const validStatuses = [
-      "Pending",
-      "Processing",
-      "Shipped",
-      "Delivered",
-      "Cancelled",
-    ];
-
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid order status",
-      });
-    }
-
-    order.orderStatus = status;
-
-    await order.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Order status updated successfully",
-      order,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
-};
   return (
 
     <div className="max-w-7xl mx-auto px-6 py-10">
@@ -137,9 +121,11 @@ const updateOrderStatus = async (req, res) => {
                   <div key={item.product?._id} className="flex gap-4 mb-4">
                     <img
                       src={
+                        item.product?.images?.[0]?.url ||
                         item.product?.images?.[0] ||
                         "https://via.placeholder.com/100"
                       }
+                      alt={item.product?.name || "Product"}
                       className="w-16 h-16 rounded object-cover"
                     />
 

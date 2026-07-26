@@ -1,6 +1,7 @@
 const Product = require("../models/Product");
 const Vendor = require("../models/Vendor");
 const cloudinary = require("../config/cloudinary");
+const slugify = require("slugify");
 
 const updateProductRating = async (product) => {
   if (product.reviews.length === 0) {
@@ -21,18 +22,20 @@ const updateProductRating = async (product) => {
 };
 const createProduct = async (req, res) => {
   try {
-    const { name, description, price, stock, category } = req.body;
+    const { name, description, price, stock, category, brand, discountPrice } =
+      req.body;
 
     if (
       !name ||
       !description ||
+      !brand ||
+      !category ||
       price === undefined ||
-      stock === undefined ||
-      !category
+      stock === undefined
     ) {
       return res.status(400).json({
         success: false,
-        message: "All fields are required",
+        message: "All required fields are mandatory",
       });
     }
 
@@ -55,20 +58,31 @@ const createProduct = async (req, res) => {
         },
       );
 
-      images.push(result.secure_url);
+      images.push({
+        public_id: result.public_id,
+        url: result.secure_url,
+      });
     }
+
+    const slug = slugify(name, {
+      lower: true,
+      strict: true,
+    });
 
     const product = await Product.create({
       vendor: vendor._id,
       name: name.trim(),
-      description,
+      description: description.trim(),
+      brand: brand.trim(),
+      slug,
       price: Number(price),
+      discountPrice: Number(discountPrice) || 0,
       stock: Number(stock),
       category,
       images,
     });
 
-    return res.status(201).json({
+    res.status(201).json({
       success: true,
       message: "Product created successfully",
       product,
@@ -76,7 +90,7 @@ const createProduct = async (req, res) => {
   } catch (error) {
     console.error(error);
 
-    return res.status(500).json({
+    res.status(500).json({
       success: false,
       message: "Failed to create product",
     });
@@ -183,7 +197,7 @@ const getAllProducts = async (req, res) => {
     const totalProducts = await Product.countDocuments(query);
 
     const products = await Product.find(query)
-    
+
       .select(
         "name price images averageRating numReviews stock vendor category createdAt",
       )
@@ -211,7 +225,6 @@ const getAllProducts = async (req, res) => {
       message: "Failed to fetch products",
     });
   }
-  
 };
 
 const getSingleProduct = async (req, res) => {
@@ -287,7 +300,6 @@ const updateProduct = async (req, res) => {
         message: "Vendor not found",
       });
     }
-
     const product = await Product.findById(req.params.id);
 
     if (!product) {
@@ -304,6 +316,34 @@ const updateProduct = async (req, res) => {
       });
     }
 
+    const nextPrice =
+      req.body.price !== undefined ? Number(req.body.price) : product.price;
+    const nextDiscountPrice =
+      req.body.discountPrice !== undefined
+        ? Number(req.body.discountPrice)
+        : product.discountPrice;
+
+    if (nextDiscountPrice && nextDiscountPrice >= nextPrice) {
+      return res.status(400).json({
+        success: false,
+        message: "Discount price must be less than actual price",
+      });
+    }
+
+    if (req.body.brand) {
+      product.brand = req.body.brand.trim();
+    }
+
+    if (req.body.name) {
+      product.slug = slugify(req.body.name, {
+        lower: true,
+        strict: true,
+      });
+    }
+
+    if (req.body.discountPrice !== undefined) {
+      product.discountPrice = Number(req.body.discountPrice);
+    }
     if (req.file) {
       const result = await cloudinary.uploader.upload(
         `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
@@ -312,13 +352,21 @@ const updateProduct = async (req, res) => {
         },
       );
 
-      product.images = [result.secure_url];
+      if (product.images.length > 0) {
+        await cloudinary.uploader.destroy(product.images[0].public_id);
+      }
+
+      product.images = [
+        {
+          public_id: result.public_id,
+          url: result.secure_url,
+        },
+      ];
     }
 
     product.name = req.body.name ?? product.name;
     product.description = req.body.description ?? product.description;
-    product.price =
-      req.body.price !== undefined ? Number(req.body.price) : product.price;
+    product.price = nextPrice;
 
     product.stock =
       req.body.stock !== undefined ? Number(req.body.stock) : product.stock;
@@ -369,7 +417,9 @@ const deleteProduct = async (req, res) => {
         message: "You are not allowed to delete this product",
       });
     }
-
+    for (const image of product.images) {
+      await cloudinary.uploader.destroy(image.public_id);
+    }
     await product.deleteOne();
 
     return res.status(200).json({

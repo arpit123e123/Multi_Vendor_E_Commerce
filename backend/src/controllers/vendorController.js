@@ -6,12 +6,33 @@ const Vendor = require("../models/Vendor");
 =========================== */
 const becomeVendor = async (req, res) => {
   try {
-    const { shopName, description, address, phone, logo } = req.body;
+    const {
+      shopName,
+      description,
+      address,
+      phone,
+      logo,
+    } = req.body;
 
-    if (!shopName || !address || !phone) {
+    // Validation
+    if (!shopName?.trim()) {
       return res.status(400).json({
         success: false,
-        message: "Shop name, address and phone are required",
+        message: "Shop name is required",
+      });
+    }
+
+    if (!address?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Address is required",
+      });
+    }
+
+    if (!phone?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Phone number is required",
       });
     }
 
@@ -24,6 +45,7 @@ const becomeVendor = async (req, res) => {
       });
     }
 
+    // Already vendor
     if (user.role === "vendor") {
       return res.status(400).json({
         success: false,
@@ -31,46 +53,43 @@ const becomeVendor = async (req, res) => {
       });
     }
 
-    if (user.vendorRequest === "pending") {
-      return res.status(400).json({
-        success: false,
-        message: "Vendor request already pending",
-      });
-    }
-
-    const existingVendor = await Vendor.findOne({ owner: user._id });
+    // Existing request
+    const existingVendor = await Vendor.findOne({
+      owner: user._id,
+    });
 
     if (existingVendor) {
       return res.status(400).json({
         success: false,
-        message: `Vendor request already ${existingVendor.status}`,
+        message: `Your request is currently ${existingVendor.status}`,
       });
     }
 
     const vendor = await Vendor.create({
       owner: user._id,
-      shopName,
-      description,
-      address,
-      phone,
-      logo,
+      shopName: shopName.trim(),
+      description: description?.trim() || "",
+      address: address.trim(),
+      phone: phone.trim(),
+      logo: logo || {},
       status: "pending",
     });
 
     user.vendorRequest = "pending";
     await user.save();
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
-      message: "Vendor request submitted successfully",
+      message:
+        "Vendor application submitted successfully. Please wait for admin approval.",
       vendor,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Become Vendor Error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Internal Server Error",
     });
   }
 };
@@ -227,8 +246,8 @@ const suspendVendor = async (req, res) => {
     const user = await User.findById(vendor.owner);
 
     if (user) {
-      user.role = "user";
-      user.vendorRequest = "suspended";
+      user.role = "customer";
+      user.vendorRequest = "approved";
       await user.save();
     }
 
@@ -250,5 +269,5 @@ module.exports = {
   getVendorRequests,
   approveVendor,
   rejectVendor,
-  suspendVendor,
+  suspendVendor,                                                 
 };

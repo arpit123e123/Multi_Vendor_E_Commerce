@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../../services/axios";
 import { toast } from "react-hot-toast";
 
@@ -7,11 +7,7 @@ function Vendors() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    fetchVendors();
-  }, []);
-
-  const fetchVendors = async () => {
+  const fetchVendors = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -23,7 +19,13 @@ function Vendors() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(fetchVendors, 0);
+
+    return () => clearTimeout(timer);
+  }, [fetchVendors]);
 
   const filteredVendors = useMemo(() => {
     return vendors.filter((vendor) => {

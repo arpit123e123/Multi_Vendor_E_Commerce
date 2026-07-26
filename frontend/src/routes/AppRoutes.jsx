@@ -30,7 +30,7 @@ import VendorProducts from "../pages/vendor/Products";
 import VendorOrders from "../pages/vendor/Orders";
 import BecomeVendor from "../pages/vendor/BecomeVendor";
 import ProtectedRoute from "../components/ProtectedRoute";
-
+import VendorLayout from "../layouts/VendorLayout";
 import ForgotPassword from "../pages/Auth/ForgotPassword";
 import ResetPassword from "../pages/Auth/ResetPassword";
 
@@ -123,48 +123,29 @@ function AppRoutes() {
 
         {/* ================= VENDOR ================= */}
 
-        <Route
-          path="/vendor"
-          element={
-            <ProtectedRoute role="vendor">
-              <VendorDashboard />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/become-vendor"
-          element={
-            <ProtectedRoute>
-              <BecomeVendor />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/vendor/add-product"
-          element={
-            <ProtectedRoute role="vendor">
-              <AddProduct />
-            </ProtectedRoute>
-          }
-        />
+<Route
+  path="/vendor"
+  element={
+    <ProtectedRoute role="vendor">
+      <VendorLayout />
+    </ProtectedRoute>
+  }
+>
+  <Route index element={<VendorDashboard />} />
+  <Route path="dashboard" element={<VendorDashboard />} />
+  <Route path="products" element={<VendorProducts />} />
+  <Route path="add-product" element={<AddProduct />} />
+  <Route path="orders" element={<VendorOrders />} />
+</Route>
 
-        <Route
-          path="/vendor/products"
-          element={
-            <ProtectedRoute role="vendor">
-              <VendorProducts />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/vendor/orders"
-          element={
-            <ProtectedRoute role="vendor">
-              <VendorOrders />
-            </ProtectedRoute>
-          }
-        />
+<Route
+  path="/become-vendor"
+  element={
+    <ProtectedRoute>
+      <BecomeVendor />
+    </ProtectedRoute>
+  }
+/>
 
         <Route path="/forgot-password" element={<ForgotPassword />} />
 

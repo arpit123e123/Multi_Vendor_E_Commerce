@@ -6,18 +6,18 @@ function FeaturedProducts() {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const data = await getProducts();
+
+        setProducts(data.products);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
     fetchProducts();
   }, []);
-
-  async function fetchProducts() {
-    try {
-      const data = await getProducts();
-
-      setProducts(data.products);
-    } catch (error) {
-      console.log(error);
-    }
-  }
 
   return (
     <section className="max-w-7xl mx-auto px-6 py-16">

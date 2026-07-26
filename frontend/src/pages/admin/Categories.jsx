@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api from "../../services/axios";
 import { toast } from "react-hot-toast";
 
@@ -7,11 +7,7 @@ function Categories() {
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -25,7 +21,13 @@ function Categories() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(fetchCategories, 0);
+
+    return () => clearTimeout(timer);
+  }, [fetchCategories]);
 
   const addCategory = async () => {
     if (!name.trim()) {

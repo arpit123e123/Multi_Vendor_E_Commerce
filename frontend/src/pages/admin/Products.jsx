@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../../services/axios";
 import { toast } from "react-hot-toast";
 
@@ -7,11 +7,7 @@ function Products() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -23,7 +19,13 @@ function Products() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(fetchProducts, 0);
+
+    return () => clearTimeout(timer);
+  }, [fetchProducts]);
 
   const deleteProduct = async (id) => {
     if (!window.confirm("Delete this product?")) return;
@@ -85,6 +87,7 @@ function Products() {
             >
               <img
                 src={
+                  product.images?.[0]?.url ||
                   product.images?.[0] ||
                   "https://placehold.co/400x400?text=No+Image"
                 }

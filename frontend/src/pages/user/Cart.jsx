@@ -97,7 +97,11 @@ const {
                   >
                     <div className="flex gap-5">
                       <img
-                        src={item.product.images?.[0] || "/no-image.png"}
+                        src={
+                          item.product.images?.[0]?.url ||
+                          item.product.images?.[0] ||
+                          "/no-image.png"
+                        }
                         alt={item.product?.name}
                         className="w-28 h-28 object-cover rounded-lg"
                       />

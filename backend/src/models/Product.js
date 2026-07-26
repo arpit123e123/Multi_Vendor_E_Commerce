@@ -51,11 +51,13 @@ const productSchema = new mongoose.Schema(
     discountPrice: {
       type: Number,
       default: 0,
+      min: 0,
     },
 
     sold: {
       type: Number,
       default: 0,
+      min: 0,
     },
 
     isFeatured: {
@@ -84,6 +86,8 @@ const productSchema = new mongoose.Schema(
     averageRating: {
       type: Number,
       default: 0,
+      min: 0,
+      max: 5,
     },
 
     numReviews: {

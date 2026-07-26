@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import couponService from "../../services/couponService";
 import { toast } from "react-hot-toast";
 
@@ -15,11 +15,7 @@ function Coupons() {
     expiryDate: "",
   });
 
-  useEffect(() => {
-    fetchCoupons();
-  }, []);
-
-  const fetchCoupons = async () => {
+  const fetchCoupons = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -31,7 +27,13 @@ function Coupons() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(fetchCoupons, 0);
+
+    return () => clearTimeout(timer);
+  }, [fetchCoupons]);
 
   const handleChange = (e) => {
     setForm({

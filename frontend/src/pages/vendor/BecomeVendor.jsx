@@ -9,8 +9,7 @@ function BecomeVendor() {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
-    businessName: "",
-    businessEmail: "",
+    shopName: "",
     phone: "",
     address: "",
     description: "",
@@ -34,13 +33,15 @@ function BecomeVendor() {
       const result = await dispatch(becomeVendor(formData));
 
       if (becomeVendor.fulfilled.match(result)) {
-        toast.success("Vendor application submitted successfully.");
+        toast.success(
+          "Application submitted successfully. Please wait for admin approval.",
+        );
         navigate("/profile");
       } else {
-        toast.error(
-          result.payload?.message || "Failed to submit application."
-        );
+        toast.error(result.payload?.message || "Failed to submit application.");
       }
+    } catch {
+      toast.error("Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -49,35 +50,18 @@ function BecomeVendor() {
   return (
     <div className="max-w-3xl mx-auto py-10 px-4">
       <div className="bg-white rounded-xl shadow-lg p-8">
-
-        <h1 className="text-3xl font-bold mb-2">
-          Become a Vendor
-        </h1>
+        <h1 className="text-3xl font-bold mb-2">Become a Vendor</h1>
 
         <p className="text-gray-500 mb-8">
-          Fill in your business details to request vendor access.
+          Fill in your shop details to request vendor access.
         </p>
 
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-5"
-        >
-
+        <form onSubmit={handleSubmit} className="space-y-5">
           <input
             type="text"
-            name="businessName"
-            placeholder="Business Name"
-            value={formData.businessName}
-            onChange={handleChange}
-            required
-            className="w-full border rounded-lg p-3"
-          />
-
-          <input
-            type="email"
-            name="businessEmail"
-            placeholder="Business Email"
-            value={formData.businessEmail}
+            name="shopName"
+            placeholder="Shop Name"
+            value={formData.shopName}
             onChange={handleChange}
             required
             className="w-full border rounded-lg p-3"
@@ -109,20 +93,17 @@ function BecomeVendor() {
             placeholder="Tell us about your business..."
             value={formData.description}
             onChange={handleChange}
-            required
             className="w-full border rounded-lg p-3"
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg disabled:opacity-60"
           >
             {loading ? "Submitting..." : "Submit Application"}
           </button>
-
         </form>
-
       </div>
     </div>
   );

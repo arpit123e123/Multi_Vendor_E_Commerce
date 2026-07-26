@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { addToWishlist } from "../../redux/slices/wishlistSlice";
 import { useParams } from "react-router-dom";
@@ -22,19 +22,24 @@ function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [relatedProducts, setRelatedProducts] = useState([]);
 
-  useEffect(() => {
-    fetchProduct();
-  }, [id]);
-
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     try {
       const data = await getSingleProduct(id);
       setProduct(data.product);
+
+      const related = await getRelatedProducts(id);
+      setRelatedProducts(related.relatedProducts || []);
     } catch (error) {
       console.error(error);
       toast.error("Failed to load product");
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    const timer = setTimeout(fetchProduct, 0);
+
+    return () => clearTimeout(timer);
+  }, [fetchProduct]);
 
   const handleAddToCart = async () => {
     try {
@@ -96,19 +101,7 @@ function ProductDetails() {
 
     setComment("");
     setRating(5);
-
-  const fetchProduct = async () => {
-  try {
-    const data = await getSingleProduct(id);
-    setProduct(data.product);
-
-    const related = await getRelatedProducts(id);
-    setRelatedProducts(related.relatedProducts);
-  } catch (error) {
-    console.error(error);
-    toast.error("Failed to load product");
-  }
-};
+    await fetchProduct();
   } finally {
     setLoading(false);
   }
@@ -122,7 +115,7 @@ function ProductDetails() {
 
           <div>
             <img
-              src={product.images?.[0] || "/no-image.png"}
+              src={product.images?.[0]?.url || product.images?.[0] || "/no-image.png"}
               alt={product.name}
               className="w-full h-500px object-cover rounded-2xl shadow-lg"
             />
@@ -290,7 +283,7 @@ function ProductDetails() {
       >
 
         <img
-          src={item.images?.[0] || "/no-image.png"}
+          src={item.images?.[0]?.url || item.images?.[0] || "/no-image.png"}
           alt={item.name}
           className="h-48 w-full object-cover rounded-lg"
         />
@@ -308,7 +301,7 @@ function ProductDetails() {
         </p>
 
         <a
-          href={`/product/${item._id}`}
+          href={`/products/${item._id}`}
           className="inline-block mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
         >
           View Details

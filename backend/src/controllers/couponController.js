@@ -76,12 +76,13 @@ const applyCoupon = async (req, res) => {
 
         message: "Coupon expired",
       });
-      if (coupon.usedCount >= coupon.usageLimit) {
-        return res.status(400).json({
-          success: false,
-          message: "Coupon usage limit reached",
-        });
-      }
+    }
+
+    if (coupon.usedCount >= coupon.usageLimit) {
+      return res.status(400).json({
+        success: false,
+        message: "Coupon usage limit reached",
+      });
     }
 
     if (totalAmount < coupon.minimumAmount) {
@@ -94,18 +95,18 @@ const applyCoupon = async (req, res) => {
 
     let discount = 0;
 
+    if (coupon.discountType === "PERCENTAGE") {
+      discount = (totalAmount * coupon.discountValue) / 100;
+    } else {
+      discount = coupon.discountValue;
+    }
+
     if (discount > totalAmount) {
       discount = totalAmount;
     }
 
     coupon.usedCount += 1;
     await coupon.save();
-
-    if (coupon.discountType === "PERCENTAGE") {
-      discount = (totalAmount * coupon.discountValue) / 100;
-    } else {
-      discount = coupon.discountValue;
-    }
 
     res.status(200).json({
       success: true,

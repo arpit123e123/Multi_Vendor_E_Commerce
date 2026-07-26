@@ -226,15 +226,16 @@ const updateOrderStatus = async (req, res) => {
 
         message: "Order not found",
       });
-      if (
-  order.orderStatus === "Delivered" ||
-  order.orderStatus === "Cancelled"
-) {
-  return res.status(400).json({
-    success: false,
-    message: "This order can no longer be updated",
-  });
-}
+    }
+
+    if (
+      order.orderStatus === "Delivered" ||
+      order.orderStatus === "Cancelled"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "This order can no longer be updated",
+      });
     }
 
     order.orderStatus = status;

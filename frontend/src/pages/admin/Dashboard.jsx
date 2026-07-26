@@ -1,5 +1,4 @@
-import { useEffect, useState } from "react";
-import MainLayout from "../../layouts/MainLayout";
+import { useCallback, useEffect, useState } from "react";
 import api from "../../services/axios";
 import { toast } from "react-hot-toast";
 
@@ -14,11 +13,7 @@ function Dashboard() {
 
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, []);
-
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -32,7 +27,13 @@ function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(fetchAnalytics, 0);
+
+    return () => clearTimeout(timer);
+  }, [fetchAnalytics]);
 
   const cards = [
     {

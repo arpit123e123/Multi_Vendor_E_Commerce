@@ -96,6 +96,7 @@ function Wishlist() {
                 <img
 
                   src={
+                    product.images?.[0]?.url ||
                     product.images?.[0] ||
                     "https://via.placeholder.com/300"
                   }

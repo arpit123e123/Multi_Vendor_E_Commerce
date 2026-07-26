@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 import ProductCard from "../../components/common/ProductCard";
@@ -23,38 +23,38 @@ function Products() {
   const category = searchParams.get("category") || "";
 
   useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+
+        const res = await getProducts({
+          keyword: search,
+          category,
+          sort,
+          page,
+          limit: 12,
+          minPrice,
+          maxPrice,
+          minRating: rating,
+          inStock,
+        });
+
+        setProducts(res.products || []);
+        setTotalPages(res.totalPages || 1);
+      } catch (err) {
+        console.error(err);
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     const timer = setTimeout(() => {
       fetchProducts();
     }, 500);
 
     return () => clearTimeout(timer);
   }, [search, sort, page, minPrice, maxPrice, rating, inStock, category]);
-
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-
-      const res = await getProducts({
-        keyword: search,
-        category,
-        sort,
-        page,
-        limit: 12,
-        minPrice,
-        maxPrice,
-        minRating: rating,
-        inStock,
-      });
-
-      setProducts(res.products || []);
-      setTotalPages(res.totalPages || 1);
-    } catch (err) {
-      console.error(err);
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <MainLayout>

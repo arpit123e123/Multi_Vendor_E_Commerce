@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import MainLayout from "../../layouts/MainLayout";
 import api from "../../services/axios";
 import { toast } from "react-hot-toast";
@@ -7,13 +7,7 @@ function VendorProducts() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
 
-
-  useEffect(() => {
-    fetchVendorProducts();
-  }, []);
-
-
-  const fetchVendorProducts = async () => {
+  const fetchVendorProducts = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -30,7 +24,14 @@ function VendorProducts() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+
+  useEffect(() => {
+    const timer = setTimeout(fetchVendorProducts, 0);
+
+    return () => clearTimeout(timer);
+  }, [fetchVendorProducts]);
 
 
   const handleDelete = async (id) => {
@@ -94,9 +95,11 @@ function VendorProducts() {
 
                 <img
                   src={
+                    product.images?.[0]?.url ||
                     product.images?.[0] ||
                     "/no-image.png"
                   }
+                  alt={product.name}
                   className="w-full h-48 object-cover rounded-lg"
                 />
 

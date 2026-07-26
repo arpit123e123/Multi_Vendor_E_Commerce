@@ -15,32 +15,43 @@ const vendorSchema = new mongoose.Schema(
       trim: true,
     },
 
-    description: String,
-
-    logo: {
+    description: {
       type: String,
       default: "",
+      trim: true,
     },
 
     address: {
       type: String,
       required: true,
+      trim: true,
     },
 
     phone: {
       type: String,
       required: true,
+      trim: true,
     },
+
+    logo: {
+      public_id: String,
+      url: String,
+    },
+
     status: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
+      enum: ["pending", "approved", "rejected", "suspended"],
       default: "pending",
     },
-    
+
+    isActive: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
-  },
+  }
 );
 
 module.exports = mongoose.model("Vendor", vendorSchema);

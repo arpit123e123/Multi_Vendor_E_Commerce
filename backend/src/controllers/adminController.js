@@ -51,26 +51,59 @@ const getAllOrders = async (req, res) => {
 
 const updateOrderStatus = async (req, res) => {
   try {
-   const { status } = req.body;
+    const { status } = req.body;
 
-const validStatuses = [
-  "Pending",
-  "Processing",
-  "Shipped",
-  "Delivered",
-  "Cancelled",
-];
+    const validStatuses = [
+      "Placed",
+      "Confirmed",
+      "Packed",
+      "Shipped",
+      "Out For Delivery",
+      "Delivered",
+      "Cancelled",
+    ];
 
-if (!validStatuses.includes(status)) {
-  return res.status(400).json({
-    success: false,
-    message: "Invalid order status",
-  });
-}
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order status",
+      });
+    }
 
-order.orderStatus = status;
+    const order = await Order.findById(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    if (
+      order.orderStatus === "Delivered" ||
+      order.orderStatus === "Cancelled"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "This order can no longer be updated",
+      });
+    }
 
     order.orderStatus = status;
+
+    order.trackingHistory.push({
+      status,
+      message: `Your order is ${status}`,
+      updatedAt: Date.now(),
+    });
+
+    if (status === "Delivered") {
+      order.deliveredAt = Date.now();
+    }
+
+    if (status === "Cancelled") {
+      order.cancelledAt = Date.now();
+    }
 
     await order.save();
 

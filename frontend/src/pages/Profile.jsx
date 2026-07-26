@@ -6,7 +6,16 @@ import {
   changePassword,
   clearUserState,
 } from "../redux/slices/userSlice";
-import MainLayout from "../layouts/MainLayout";
+
+const getProfileForm = (user) => ({
+  name: user?.name || "",
+  phone: user?.phone || "",
+  address: user?.address || "",
+  city: user?.city || "",
+  state: user?.state || "",
+  country: user?.country || "",
+  pincode: user?.pincode || "",
+});
 
 const Profile = () => {
   const dispatch = useDispatch();
@@ -18,15 +27,7 @@ const Profile = () => {
     error,
   } = useSelector((state) => state.user);
 
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    country: "",
-    pincode: "",
-  });
+  const [form, setForm] = useState({});
 
   const [password, setPassword] = useState({
     currentPassword: "",
@@ -38,19 +39,10 @@ const Profile = () => {
     dispatch(getProfile());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (user) {
-      setForm({
-        name: user.name || "",
-        phone: user.phone || "",
-        address: user.address || "",
-        city: user.city || "",
-        state: user.state || "",
-        country: user.country || "",
-        pincode: user.pincode || "",
-      });
-    }
-  }, [user]);
+  const profileForm = {
+    ...getProfileForm(user),
+    ...form,
+  };
 
   useEffect(() => {
     if (success) {
@@ -67,7 +59,7 @@ const Profile = () => {
   const handleProfile = (e) => {
     e.preventDefault();
 
-    dispatch(updateProfile(form));
+    dispatch(updateProfile(profileForm));
   };
 
   const handlePassword = (e) => {
@@ -122,7 +114,7 @@ const Profile = () => {
       <input
         className="border rounded p-3 w-full"
         placeholder="Name"
-        value={form.name}
+        value={profileForm.name}
         onChange={(e)=>
           setForm({
             ...form,
@@ -134,7 +126,7 @@ const Profile = () => {
       <input
         className="border rounded p-3 w-full"
         placeholder="Phone"
-        value={form.phone}
+        value={profileForm.phone}
         maxLength={10}
         onChange={(e)=>
           setForm({
@@ -147,7 +139,7 @@ const Profile = () => {
       <input
         className="border rounded p-3 w-full"
         placeholder="Address"
-        value={form.address}
+        value={profileForm.address}
         onChange={(e)=>
           setForm({
             ...form,
@@ -161,7 +153,7 @@ const Profile = () => {
         <input
           className="border rounded p-3"
           placeholder="City"
-          value={form.city}
+          value={profileForm.city}
           onChange={(e)=>
             setForm({
               ...form,
@@ -173,7 +165,7 @@ const Profile = () => {
         <input
           className="border rounded p-3"
           placeholder="State"
-          value={form.state}
+          value={profileForm.state}
           onChange={(e)=>
             setForm({
               ...form,
@@ -189,7 +181,7 @@ const Profile = () => {
         <input
           className="border rounded p-3"
           placeholder="Country"
-          value={form.country}
+          value={profileForm.country}
           onChange={(e)=>
             setForm({
               ...form,
@@ -201,7 +193,7 @@ const Profile = () => {
         <input
           className="border rounded p-3"
           placeholder="Pincode"
-          value={form.pincode}
+          value={profileForm.pincode}
           maxLength={6}
           onChange={(e)=>
             setForm({

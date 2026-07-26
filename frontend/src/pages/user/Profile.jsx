@@ -10,6 +10,18 @@ import {
   clearUserState,
 } from "../../redux/slices/userSlice";
 
+const getProfileForm = (user) => ({
+  name: user?.name || "",
+  email: user?.email || "",
+  phone: user?.phone || "",
+  address: user?.address || "",
+  city: user?.city || "",
+  state: user?.state || "",
+  country: user?.country || "",
+  pincode: user?.pincode || "",
+  role: user?.role || "customer",
+});
+
 const Profile = () => {
   const dispatch = useDispatch();
 
@@ -22,17 +34,7 @@ const Profile = () => {
 
   const [isEditing, setIsEditing] = useState(false);
 
-  const [profile, setProfile] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    country: "",
-    pincode: "",
-    role: "",
-  });
+  const [profileOverrides, setProfile] = useState({});
 
   const [password, setPassword] = useState({
     currentPassword: "",
@@ -44,21 +46,10 @@ const Profile = () => {
     dispatch(getProfile());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (user) {
-      setProfile({
-        name: user.name || "",
-        email: user.email || "",
-        phone: user.phone || "",
-        address: user.address || "",
-        city: user.city || "",
-        state: user.state || "",
-        country: user.country || "",
-        pincode: user.pincode || "",
-        role: user.role || "customer",
-      });
-    }
-  }, [user]);
+  const profile = {
+    ...getProfileForm(user),
+    ...profileOverrides,
+  };
 
   useEffect(() => {
     if (success) {
@@ -386,17 +377,7 @@ const Profile = () => {
                   onClick={() => {
                     setIsEditing(false);
 
-                    setProfile({
-                      name: user.name || "",
-                      email: user.email || "",
-                      phone: user.phone || "",
-                      address: user.address || "",
-                      city: user.city || "",
-                      state: user.state || "",
-                      country: user.country || "",
-                      pincode: user.pincode || "",
-                      role: user.role || "customer",
-                    });
+                    setProfile({});
                   }}
                   className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg"
                 >
@@ -415,6 +396,8 @@ const Profile = () => {
             </Link>
 
           </div>
+
+        </form>
 
           <hr className="my-10" />
                     <div>
@@ -480,7 +463,6 @@ const Profile = () => {
             </form>
 
           </div>
- </form>
         </div>
 
       </div>

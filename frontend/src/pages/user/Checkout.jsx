@@ -5,10 +5,6 @@ import { getAddresses, addAddress } from "../../redux/slices/addressSlice";
 import paymentService from "../../services/paymentService";
 import { clearCartState } from "../../redux/slices/cartSlice";
 import { placeOrder } from "../../redux/slices/orderSlice";
-import {
-  applyCoupon,
-  clearCoupon,
-} from "../../redux/slices/couponSlice";
 import { useNavigate } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
 
@@ -17,11 +13,6 @@ const Checkout = () => {
   const navigate = useNavigate();
   const { addresses = [], loading: addressesLoading } = useSelector((state) => state.address || {});
   const { placeOrderLoading } = useSelector((state) => state.order || {});
-const {
-  discount,
-  finalAmount,
-  appliedCoupon,
-} = useSelector((state) => state.coupon || {});
 
   const [selected, setSelected] = useState(null);
   const [newAddress, setNewAddress] = useState({
@@ -36,7 +27,6 @@ const {
   const [addLoading, setAddLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [paymentLoading, setPaymentLoading] = useState(false);
-const [couponCode, setCouponCode] = useState("");
 
   const placeLoading = placeOrderLoading || paymentLoading;
   const selectedAddressId = selected || addresses?.[0]?._id || addresses?.[0]?.id || null;
@@ -100,30 +90,6 @@ const [couponCode, setCouponCode] = useState("");
       setAddLoading(false);
     }
   };
-const handleApplyCoupon = async () => {
-  if (!couponCode.trim()) {
-    toast.error("Enter coupon code");
-    return;
-  }
-
-  try {
-    await dispatch(
-      applyCoupon({
-        code: couponCode,
-        totalAmount: 0,
-      })
-    ).unwrap();
-
-    toast.success("Coupon Applied");
-  } catch (err) {
-    toast.error(getErrorMessage(err, "Invalid Coupon"));
-  }
-};
-const removeCoupon = () => {
-  dispatch(clearCoupon());
-  setCouponCode("");
-  toast.success("Coupon Removed");
-};
   const loadRazorpay = () =>
     new Promise((resolve, reject) => {
       if (window.Razorpay) return resolve();
