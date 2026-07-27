@@ -50,20 +50,23 @@ const createProduct = async (req, res) => {
 
     let images = [];
 
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(
-        `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
-        {
-          folder: "products",
-        },
-      );
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const result = await cloudinary.uploader.upload(
+          `data:${file.mimetype};base64,${file.buffer.toString("base64")}`,
 
-      images.push({
-        public_id: result.public_id,
-        url: result.secure_url,
-      });
+          {
+            folder: "products",
+          },
+        );
+
+        images.push({
+          public_id: result.public_id,
+
+          url: result.secure_url,
+        });
+      }
     }
-
     const slug = slugify(name, {
       lower: true,
       strict: true,
@@ -344,24 +347,28 @@ const updateProduct = async (req, res) => {
     if (req.body.discountPrice !== undefined) {
       product.discountPrice = Number(req.body.discountPrice);
     }
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(
-        `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`,
-        {
-          folder: "products",
-        },
-      );
-
-      if (product.images.length > 0) {
-        await cloudinary.uploader.destroy(product.images[0].public_id);
+    if (req.files && req.files.length > 0) {
+      for (const image of product.images) {
+        await cloudinary.uploader.destroy(image.public_id);
       }
 
-      product.images = [
-        {
+      product.images = [];
+
+      for (const file of req.files) {
+        const result = await cloudinary.uploader.upload(
+          `data:${file.mimetype};base64,${file.buffer.toString("base64")}`,
+
+          {
+            folder: "products",
+          },
+        );
+
+        product.images.push({
           public_id: result.public_id,
+
           url: result.secure_url,
-        },
-      ];
+        });
+      }
     }
 
     product.name = req.body.name ?? product.name;

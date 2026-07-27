@@ -11,6 +11,9 @@ const {
   getTopProducts,
   getRecentOrders,
   getAllVendors,
+  getVendorDetails,
+  approveVendor,
+  rejectVendor,
   updateUserStatus,
   deleteUser,
 } = require("../controllers/adminController");
@@ -22,7 +25,16 @@ router.get("/analytics", protect, authorize("admin"), getDashboardAnalytics);
 router.get("/recent-orders", protect, authorize("admin"), getRecentOrders);
 router.get("/vendors", protect, authorize("admin"), getAllVendors);
 router.patch("/users/:id", protect, authorize("admin"), updateUserStatus);
+router.get("/vendors/:id", protect, authorize("admin"), getVendorDetails);
 
+router.patch(
+  "/vendors/:id/approve",
+  protect,
+  authorize("admin"),
+  approveVendor,
+);
+
+router.patch("/vendors/:id/reject", protect, authorize("admin"), rejectVendor);
 router.delete("/users/:id", protect, authorize("admin"), deleteUser);
 
 router.get("/top-products", protect, authorize("admin"), getTopProducts);

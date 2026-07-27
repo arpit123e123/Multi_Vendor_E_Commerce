@@ -3,29 +3,119 @@ const User = require("../models/User");
 const Product = require("../models/Product");
 const Vendor = require("../models/Vendor");
 
-
-
 const getAllVendors = async (req, res) => {
   try {
-
     const vendors = await Vendor.find()
-  .populate("owner", "name email")
-  .sort({ createdAt: -1 });
+      .populate("owner", "name email")
+      .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
       count: vendors.length,
       vendors,
     });
-
-
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
+  }
+};
+const getVendorDetails = async (req, res) => {
+  try {
+    const vendor = await Vendor.findById(req.params.id).populate(
+      "owner",
+      "name email phone role vendorRequest",
+    );
 
+    if (!vendor) {
+      return res.status(404).json({
+        success: false,
+        message: "Vendor not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      vendor,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+const approveVendor = async (req, res) => {
+  try {
+    const vendor = await Vendor.findById(req.params.id);
+
+    if (!vendor) {
+      return res.status(404).json({
+        success: false,
+        message: "Vendor not found",
+      });
+    }
+
+    vendor.status = "approved";
+    vendor.isActive = true;
+    vendor.isVerified = true;
+    vendor.approvedAt = new Date();
+    vendor.approvedBy = req.user._id;
+
+    await vendor.save();
+
+    const user = await User.findById(vendor.owner);
+
+    user.role = "vendor";
+    user.vendorRequest = "approved";
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Vendor approved successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+const rejectVendor = async (req, res) => {
+  try {
+    const { reason } = req.body;
+
+    const vendor = await Vendor.findById(req.params.id);
+
+    if (!vendor) {
+      return res.status(404).json({
+        success: false,
+        message: "Vendor not found",
+      });
+    }
+
+    vendor.status = "rejected";
+    vendor.rejectReason = reason || "";
+
+    await vendor.save();
+
+    const user = await User.findById(vendor.owner);
+
+    user.vendorRequest = "rejected";
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Vendor rejected successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 const getAllOrders = async (req, res) => {
@@ -79,10 +169,18 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
-    if (
-      order.orderStatus === "Delivered" ||
-      order.orderStatus === "Cancelled"
-    ) {
+    if (order.orderStatus === "Delivered" || order.orderStatus === "Cancelled")
+      if (status === "Cancelled") {
+        for (const item of order.items) {
+          const product = await Product.findById(item.product);
+
+          product.stock += item.quantity;
+          product.sold -= item.quantity;
+
+          await product.save();
+        }
+      }
+    {
       return res.status(400).json({
         success: false,
         message: "This order can no longer be updated",
@@ -197,9 +295,7 @@ const getTopProducts = async (req, res) => {
 
 const getAllUsers = async (req, res) => {
   try {
-   const users = await User.find()
-  .select("-password")
-  .sort({ createdAt: -1 });
+    const users = await User.find().select("-password").sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
@@ -237,20 +333,16 @@ const updateUserStatus = async (req, res) => {
         ? "User blocked successfully"
         : "User unblocked successfully",
     });
-
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
 const deleteUser = async (req, res) => {
   try {
-
     const user = await User.findById(req.params.id);
 
     if (!user) {
@@ -266,14 +358,11 @@ const deleteUser = async (req, res) => {
       success: true,
       message: "User deleted successfully",
     });
-
   } catch (error) {
-
     res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 module.exports = {
@@ -283,7 +372,10 @@ module.exports = {
   getDashboardAnalytics,
   getTopProducts,
   getRecentOrders,
-  getAllVendors,  
+  getAllVendors,
+  getVendorDetails,
+  approveVendor,
+  rejectVendor,
   updateUserStatus,
-  deleteUser, 
+  deleteUser,
 };

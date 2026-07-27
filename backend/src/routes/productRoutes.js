@@ -2,15 +2,14 @@ const express = require("express");
 const router = express.Router();
 
 const {
-  createProduct,
   getAllProducts,
   getSingleProduct,
+  getRelatedProducts,
+  createProduct,
   updateProduct,
   deleteProduct,
   addReview,
-  updateReview,
-  deleteReview,
-  getRelatedProducts,
+  updateReview, deleteReview,
 } = require("../controllers/productController");
 
 const {
@@ -32,7 +31,7 @@ router.post(
   "/create",
   protect,
   authorize("vendor"),
-  upload.single("image"),
+upload.array("images", 5),
  // createProductValidation,
   //validate,
   createProduct
@@ -50,9 +49,9 @@ router.put(
   "/:id",
   protect,
   authorize("vendor"),
+  upload.array("images",5),
   updateProduct
 );
-
 router.delete(
   "/:id",
   protect,

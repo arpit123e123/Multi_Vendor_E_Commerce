@@ -1,60 +1,240 @@
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import vendorService from "../../services/vendorService";
 import {
   Package,
   ShoppingCart,
   IndianRupee,
-  AlertTriangle,
+  BarChart3,
 } from "lucide-react";
 
-import DashboardCard from "../../components/vendor/DashboardCard";
+const Dashboard = () => {
+  const [loading, setLoading] = useState(true);
 
-function Dashboard() {
+  const [stats, setStats] = useState({
+    totalProducts: 0,
+    totalOrders: 0,
+    totalRevenue: 0,
+    pendingOrders: 0,
+  });
+
+  const [recentOrders, setRecentOrders] = useState([]);
+
+  useEffect(() => {
+    fetchDashboard();
+  }, []);
+
+  const fetchDashboard = async () => {
+    try {
+      setLoading(true);
+
+      const res = await vendorService.getVendorDashboard();
+
+      setStats({
+        totalProducts: res.totalProducts || 0,
+        totalOrders: res.totalOrders || 0,
+        totalRevenue: res.totalRevenue || 0,
+        pendingOrders: res.pendingOrders || 0,
+      });
+
+      setRecentOrders(res.recentOrders || []);
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message || "Failed to load dashboard"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center text-xl font-semibold">
+        Loading Dashboard...
+      </div>
+    );
+  }
+
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-8">
+    <div className="p-6">
+
+      <h1 className="mb-8 text-3xl font-bold">
         Vendor Dashboard
       </h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        <DashboardCard
-          title="Total Products"
-          value="0"
-          icon={Package}
-          color="bg-blue-600"
-        />
+      {/* Stats */}
 
-        <DashboardCard
-          title="Orders"
-          value="0"
-          icon={ShoppingCart}
-          color="bg-green-600"
-        />
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
 
-        <DashboardCard
-          title="Revenue"
-          value="₹0"
-          icon={IndianRupee}
-          color="bg-purple-600"
-        />
+        <div className="rounded-xl bg-white p-6 shadow">
 
-        <DashboardCard
-          title="Low Stock"
-          value="0"
-          icon={AlertTriangle}
-          color="bg-red-600"
-        />
+          <div className="flex items-center justify-between">
+
+            <div>
+
+              <p className="text-gray-500">
+                Products
+              </p>
+
+              <h2 className="mt-2 text-3xl font-bold">
+                {stats.totalProducts}
+              </h2>
+
+            </div>
+
+            <Package size={42}/>
+          </div>
+
+        </div>
+
+        <div className="rounded-xl bg-white p-6 shadow">
+
+          <div className="flex items-center justify-between">
+
+            <div>
+
+              <p className="text-gray-500">
+                Orders
+              </p>
+
+              <h2 className="mt-2 text-3xl font-bold">
+                {stats.totalOrders}
+              </h2>
+
+            </div>
+
+            <ShoppingCart size={42}/>
+          </div>
+
+        </div>
+
+        <div className="rounded-xl bg-white p-6 shadow">
+
+          <div className="flex items-center justify-between">
+
+            <div>
+
+              <p className="text-gray-500">
+                Revenue
+              </p>
+
+              <h2 className="mt-2 text-3xl font-bold">
+                ₹{stats.totalRevenue}
+              </h2>
+
+            </div>
+
+            <IndianRupee size={42}/>
+          </div>
+
+        </div>
+
+        <div className="rounded-xl bg-white p-6 shadow">
+
+          <div className="flex items-center justify-between">
+
+            <div>
+
+              <p className="text-gray-500">
+                Pending
+              </p>
+
+              <h2 className="mt-2 text-3xl font-bold">
+                {stats.pendingOrders}
+              </h2>
+
+            </div>
+
+            <BarChart3 size={42}/>
+          </div>
+
+        </div>
+
       </div>
 
-      <div className="bg-white rounded-xl shadow mt-8 p-6">
-        <h2 className="text-xl font-semibold mb-4">
+      {/* Recent Orders */}
+
+      <div className="mt-10 rounded-xl bg-white p-6 shadow">
+
+        <h2 className="mb-6 text-2xl font-bold">
           Recent Orders
         </h2>
 
-        <p className="text-gray-500">
-          No recent orders found.
-        </p>
+        {
+          recentOrders.length === 0
+          ? (
+            <p className="text-gray-500">
+              No recent orders found.
+            </p>
+          )
+          : (
+            <table className="w-full">
+
+              <thead>
+
+                <tr className="border-b">
+
+                  <th className="p-3 text-left">
+                    Order ID
+                  </th>
+
+                  <th className="p-3 text-left">
+                    Customer
+                  </th>
+
+                  <th className="p-3 text-left">
+                    Amount
+                  </th>
+
+                  <th className="p-3 text-left">
+                    Status
+                  </th>
+
+                </tr>
+
+              </thead>
+
+              <tbody>
+
+                {
+                  recentOrders.map((order) => (
+
+                    <tr
+                      key={order._id}
+                      className="border-b"
+                    >
+
+                      <td className="p-3">
+                        {order._id.slice(-6)}
+                      </td>
+
+                      <td className="p-3">
+                        {order.user?.name}
+                      </td>
+
+                      <td className="p-3">
+                        ₹{order.totalAmount}
+                      </td>
+
+                      <td className="p-3">
+                        {order.status}
+                      </td>
+
+                    </tr>
+
+                  ))
+                }
+
+              </tbody>
+
+            </table>
+          )
+        }
+
       </div>
+
     </div>
   );
-}
+};
 
 export default Dashboard;

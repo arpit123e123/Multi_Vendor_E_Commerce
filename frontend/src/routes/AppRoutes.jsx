@@ -28,6 +28,8 @@ import VendorDashboard from "../pages/vendor/Dashboard";
 import AddProduct from "../pages/vendor/AddProduct";
 import VendorProducts from "../pages/vendor/Products";
 import VendorOrders from "../pages/vendor/Orders";
+import VendorProfile from "../pages/vendor/Profile";
+import Analytics from "../pages/vendor/Analytics";
 import BecomeVendor from "../pages/vendor/BecomeVendor";
 import ProtectedRoute from "../components/ProtectedRoute";
 import VendorLayout from "../layouts/VendorLayout";
@@ -67,7 +69,6 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/checkout"
           element={
@@ -105,7 +106,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         >
-          <Route path="settings" element={<Settings />} />
+          <Route path="settings" element={<VendorProfile />} />
           <Route index element={<Dashboard />} />
 
           <Route path="users" element={<Users />} />
@@ -123,29 +124,31 @@ function AppRoutes() {
 
         {/* ================= VENDOR ================= */}
 
-<Route
-  path="/vendor"
-  element={
-    <ProtectedRoute role="vendor">
-      <VendorLayout />
-    </ProtectedRoute>
-  }
->
-  <Route index element={<VendorDashboard />} />
-  <Route path="dashboard" element={<VendorDashboard />} />
-  <Route path="products" element={<VendorProducts />} />
-  <Route path="add-product" element={<AddProduct />} />
-  <Route path="orders" element={<VendorOrders />} />
-</Route>
+        <Route
+          path="/vendor"
+          element={
+            <ProtectedRoute role="vendor">
+              <VendorLayout />
+            </ProtectedRoute>
+          }
+        >
+        <Route path="analytics" element={<Analytics />} />
+          <Route index element={<VendorDashboard />} />
+          <Route path="dashboard" element={<VendorDashboard />} />
+          <Route path="products" element={<VendorProducts />} />
+          <Route path="add-product" element={<AddProduct />} />
+          <Route path="orders" element={<VendorOrders />} />
+          <Route path="profile" element={<VendorProfile />} />
+        </Route>
 
-<Route
-  path="/become-vendor"
-  element={
-    <ProtectedRoute>
-      <BecomeVendor />
-    </ProtectedRoute>
-  }
-/>
+        <Route
+          path="/become-vendor"
+          element={
+            <ProtectedRoute>
+              <BecomeVendor />
+            </ProtectedRoute>
+          }
+        />
 
         <Route path="/forgot-password" element={<ForgotPassword />} />
 

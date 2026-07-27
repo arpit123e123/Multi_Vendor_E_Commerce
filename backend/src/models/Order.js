@@ -1,144 +1,89 @@
 const mongoose = require("mongoose");
 
-
 const orderSchema = new mongoose.Schema(
-
   {
-
     user: {
-
       type: mongoose.Schema.Types.ObjectId,
 
       ref: "User",
 
       required: true,
-
     },
 
-
-
     items: [
-
       {
-
         product: {
-
           type: mongoose.Schema.Types.ObjectId,
 
           ref: "Product",
 
           required: true,
-
         },
-
-
+        vendor: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Vendor",
+          required: true,
+        },
         quantity: {
-
           type: Number,
 
           required: true,
-
         },
-
 
         price: {
-
           type: Number,
 
           required: true,
-
         },
-
       },
-
     ],
 
-
-
-
     address: {
-
       type: mongoose.Schema.Types.ObjectId,
 
       ref: "Address",
 
       required: true,
-
     },
 
-
-
-
     totalAmount: {
-
       type: Number,
 
       required: true,
-
     },
 
-
-
-
     paymentMethod: {
-
       type: String,
 
-      enum: [
-        "COD",
-        "RAZORPAY"
-      ],
+      enum: ["COD", "RAZORPAY"],
 
       default: "COD",
 
       required: true,
-
     },
-
-
 
     paymentId: {
-
       type: String,
-
     },
-
-
 
     razorpayOrderId: {
-
       type: String,
-
     },
-
-
 
     paymentStatus: {
-
       type: String,
 
-      enum: [
-        "Pending",
-        "Paid",
-        "Failed"
-      ],
+      enum: ["Pending", "Paid", "Failed"],
 
       default: "Pending",
-
     },
-
-
-
-
 
     // Order Current Status
 
     orderStatus: {
-
       type: String,
 
       enum: [
-
         "Placed",
 
         "Confirmed",
@@ -152,83 +97,47 @@ const orderSchema = new mongoose.Schema(
         "Delivered",
 
         "Cancelled",
-
       ],
 
       default: "Placed",
-
     },
-
-
-
-
 
     // Order Tracking Timeline
 
     trackingHistory: [
-
       {
-
         status: {
-
           type: String,
 
           required: true,
-
         },
-
 
         message: {
-
           type: String,
 
           required: true,
-
         },
 
-
         updatedAt: {
-
           type: Date,
 
           default: Date.now,
-
         },
-
       },
-
     ],
 
-
-
     deliveredAt: {
-
       type: Date,
-
     },
-
-
 
     cancelledAt: {
-
       type: Date,
-
     },
-
-
   },
 
   {
-
     timestamps: true,
-
-  }
-
+  },
 );
 
-
-
-module.exports = mongoose.model(
-  "Order",
-  orderSchema
-);
+module.exports = mongoose.model("Order", orderSchema);

@@ -17,7 +17,7 @@ const menuItems = [
   {
     name: "Products",
     icon: Package,
-    path: "/vendor/products",
+    path: "/vendor/products", 
   },
   {
     name: "Orders",
@@ -30,9 +30,9 @@ const menuItems = [
     path: "/vendor/analytics",
   },
   {
-    name: "Settings",
+    name: "profile",
     icon: Settings,
-    path: "/vendor/settings",
+    path: "/vendor/profile",
   },
 ];
 

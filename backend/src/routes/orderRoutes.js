@@ -7,38 +7,20 @@ const {
   updateOrderStatus,
 } = require("../controllers/orderController");
 
-const {
-  protect,
-  authorize,
-} = require("../middleware/authMiddleware");
-
-
+const { protect, authorize } = require("../middleware/authMiddleware");
 
 // User create order
-router.post(
-  "/",
-  protect,
-  createOrder
-);
-
-
+router.post("/", protect, createOrder);
 
 // User get own orders
-router.get(
-  "/",
-  protect,
-  getMyOrders
-);
-
-
+router.get("/", protect, getMyOrders);
 
 // Admin/Vendor update order status
 router.patch(
   "/:id/status",
   protect,
   authorize("admin", "vendor"),
-  updateOrderStatus
+  updateOrderStatus,
 );
-
 
 module.exports = router;
