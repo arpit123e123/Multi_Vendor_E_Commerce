@@ -3,6 +3,9 @@ const Vendor = require("../models/Vendor");
 const Product = require("../models/Product");
 const Order = require("../models/Order");
 const mongoose = require("mongoose");
+const Category = require("../models/Category");
+const cloudinary = require("../config/cloudinary");
+const streamifier = require("streamifier");
 
 const createSlug = (name) => {
   return name
@@ -936,6 +939,119 @@ const updateVendorProfile = async (req, res) => {
     });
   }
 };
+const createProduct = async (req, res) => {
+  try {
+    const {
+      name,
+      description,
+      brand,
+      category,
+      price,
+      discountPrice,
+      stock,
+    } = req.body;
+
+    if (
+      !name ||
+      !description ||
+      !brand ||
+      !category ||
+      !price ||
+      !stock
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Please fill all required fields",
+      });
+    }
+
+    const vendor = await Vendor.findOne({
+      owner: req.user._id,
+      status: "approved",
+    });
+
+    if (!vendor) {
+      return res.status(404).json({
+        success: false,
+        message: "Vendor not found",
+      });
+    }
+
+    const categoryExists = await Category.findById(category);
+
+    if (!categoryExists) {
+      return res.status(404).json({
+        success: false,
+        message: "Category not found",
+      });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please upload product images",
+      });
+    }
+
+    const uploadedImages = [];
+
+    for (const file of req.files) {
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "products",
+          },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+
+        streamifier.createReadStream(file.buffer).pipe(stream);
+      });
+
+      uploadedImages.push({
+        public_id: result.public_id,
+        url: result.secure_url,
+      });
+    }
+
+    const slug = name
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/[^\w-]+/g, "");
+
+    const product = await Product.create({
+      name,
+      slug,
+      description,
+      brand,
+      category,
+      vendor: vendor._id,
+      price,
+      discountPrice: discountPrice || 0,
+      stock,
+      images: uploadedImages,
+      isActive: true,
+      status: "active",
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Product created successfully",
+      product,
+    });
+
+  } catch (error) {
+    console.error("Create Product:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to create product",
+    });
+  }
+};
 const changeProductStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -1189,4 +1305,5 @@ module.exports = {
   changeProductStatus,
   bulkUpdateProducts,
   getVendorStats,
+  createProduct,
 };

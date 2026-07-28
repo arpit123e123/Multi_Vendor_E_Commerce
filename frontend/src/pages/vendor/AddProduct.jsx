@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import vendorService from "../../services/vendorService";
-//import categoryService from "../../services/categoryService";
+import categoryService from "../../services/categoryService";
 
 const AddProduct = () => {
   const navigate = useNavigate();

@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const { protect, authorize } = require("../middleware/authMiddleware");
-
+const upload = require("../middleware/upload");
 const {
   becomeVendor,
   getVendorProfile,
@@ -16,6 +16,7 @@ const {
   getVendorStats,
   bulkUpdateProducts,
   getVendorAnalytics,
+  createProduct,
   getVendorProducts,
   deleteVendorProduct,
   updateVendorProfile,
@@ -62,7 +63,13 @@ router.get(
   authorize("vendor"),
   getVendorStats
 );
-
+router.post(
+  "/products",
+  protect,
+  authorize("vendor"),
+  upload.array("images", 5),
+  createProduct
+);
 // Products
 router.get(
   "/products",

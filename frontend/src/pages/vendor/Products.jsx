@@ -113,13 +113,13 @@ const Products = () => {
 
         </div>
 
-        <Link
-          to="/vendor/products/add"
-          className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
-        >
-          <Plus size={18} />
-          Add Product
-        </Link>
+       <Link
+  to="/vendor/add-product"
+  className="flex items-center gap-2 rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
+>
+  <Plus size={18} />
+  Add Product
+</Link>
 
       </div>
 
