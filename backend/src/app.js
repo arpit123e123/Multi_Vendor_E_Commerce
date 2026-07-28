@@ -28,13 +28,24 @@ const app = express();
    Middlewares
 =========================== */
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://multi-vendor-e-commerce-sand.vercel.app",
+  "https://multi-vendor-e-commerce-ar8.vercel.app",
+  "https://multi-vendor-e-commerce-git-master-ar8.vercel.app",
+];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://multi-vendor-e-commerce-ar8.vercel.app",
-      "https://multi-vendor-e-commerce-git-master-ar8.vercel.app",
-    ],
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
   })
 );
