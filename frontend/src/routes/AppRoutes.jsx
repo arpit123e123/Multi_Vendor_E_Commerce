@@ -11,7 +11,7 @@ import Orders from "../pages/user/Orders";
 import Profile from "../pages/user/Profile";
 
 // Auth
-import Auth from "../pages/auth/Auth";
+import Auth from "../pages/Auth/Auth";
 import ForgotPassword from "../pages/Auth/ForgotPassword";
 import ResetPassword from "../pages/Auth/ResetPassword";
 
