@@ -30,6 +30,11 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:5173",
+
+  // Vercel production
+  "https://multi-vendor-e-commerce-o58m10dfd-ar8.vercel.app",
+
+  // Previous deployments
   "https://multi-vendor-e-commerce-sand.vercel.app",
   "https://multi-vendor-e-commerce-ar8.vercel.app",
   "https://multi-vendor-e-commerce-git-master-ar8.vercel.app",
