@@ -37,7 +37,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: "",
-      match: [/^[6-9]\d{9}$/, "Please enter a valid phone number"],
+      match: [/^(?:\+?\d{1,3}[- ]?)?\d{10}$/, "Please enter a valid phone number"],
     },
 
     isVerified: {

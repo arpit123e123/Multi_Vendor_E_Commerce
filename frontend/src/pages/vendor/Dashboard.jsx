@@ -21,31 +21,31 @@ const Dashboard = () => {
   const [recentOrders, setRecentOrders] = useState([]);
 
   useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        setLoading(true);
+
+        const res = await vendorService.getVendorDashboard();
+
+        setStats({
+          totalProducts: res.totalProducts || 0,
+          totalOrders: res.totalOrders || 0,
+          totalRevenue: res.totalRevenue || 0,
+          pendingOrders: res.pendingOrders || 0,
+        });
+
+        setRecentOrders(res.recentOrders || []);
+      } catch (err) {
+        toast.error(
+          err.response?.data?.message || "Failed to load dashboard"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchDashboard();
   }, []);
-
-  const fetchDashboard = async () => {
-    try {
-      setLoading(true);
-
-      const res = await vendorService.getVendorDashboard();
-
-      setStats({
-        totalProducts: res.totalProducts || 0,
-        totalOrders: res.totalOrders || 0,
-        totalRevenue: res.totalRevenue || 0,
-        pendingOrders: res.pendingOrders || 0,
-      });
-
-      setRecentOrders(res.recentOrders || []);
-    } catch (err) {
-      toast.error(
-        err.response?.data?.message || "Failed to load dashboard"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (

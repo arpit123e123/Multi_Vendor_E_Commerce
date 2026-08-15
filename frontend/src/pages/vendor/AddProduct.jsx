@@ -23,17 +23,17 @@ const AddProduct = () => {
   });
 
   useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await categoryService.getAllCategories();
+        setCategories(res.categories || []);
+      } catch {
+        toast.error("Failed to load categories");
+      }
+    };
+
     fetchCategories();
   }, []);
-
-  const fetchCategories = async () => {
-    try {
-      const res = await categoryService.getAllCategories();
-      setCategories(res.categories || []);
-    } catch (err) {
-      toast.error("Failed to load categories");
-    }
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;

@@ -15,10 +15,6 @@ const Products = () => {
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
   const fetchProducts = async () => {
     try {
       setLoading(true);
@@ -35,6 +31,14 @@ const Products = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      await fetchProducts();
+    };
+
+    loadProducts();
+  }, []);
 
   const filteredProducts = useMemo(() => {
     return products.filter((product) =>

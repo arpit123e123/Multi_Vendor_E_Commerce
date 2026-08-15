@@ -50,6 +50,8 @@ const register = async (req, res) => {
       role = "customer";
     }
 
+    phone = phone.trim();
+
     const user = await User.create({
       name: name.trim(),
       email,
@@ -76,6 +78,17 @@ const register = async (req, res) => {
     });
   } catch (error) {
     console.error("Register Error:", error);
+
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map(
+        (err) => err.message
+      );
+
+      return res.status(400).json({
+        success: false,
+        message: messages[0] || "Invalid input",
+      });
+    }
 
     return res.status(500).json({
       success: false,

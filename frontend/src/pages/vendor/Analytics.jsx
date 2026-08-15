@@ -7,22 +7,22 @@ const Analytics = () => {
   const [analytics, setAnalytics] = useState(null);
 
   useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setLoading(true);
+
+        const res = await vendorService.getVendorAnalytics();
+
+        setAnalytics(res.analytics || {});
+      } catch {
+        toast.error("Failed to load analytics");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchAnalytics();
   }, []);
-
-  const fetchAnalytics = async () => {
-    try {
-      setLoading(true);
-
-      const res = await vendorService.getVendorAnalytics();
-
-      setAnalytics(res.analytics || {});
-    } catch (err) {
-      toast.error("Failed to load analytics");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (

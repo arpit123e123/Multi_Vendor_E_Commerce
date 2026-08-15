@@ -34,7 +34,7 @@ const allowedOrigins = [
   "https://multi-vendor-e-commerce-ar8.vercel.app",
   "https://multi-vendor-e-commerce-git-master-ar8.vercel.app",
 ];
-
+ 
 app.use(
   cors({
     origin: function (origin, callback) {

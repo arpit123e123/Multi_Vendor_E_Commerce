@@ -30,7 +30,11 @@ function Vendors() {
   }, []);
 
   useEffect(() => {
-    fetchVendors();
+    const loadVendors = async () => {
+      await fetchVendors();
+    };
+
+    loadVendors();
   }, [fetchVendors]);
 
   const filteredVendors = useMemo(() => {

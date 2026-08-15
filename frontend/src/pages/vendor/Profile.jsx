@@ -26,42 +26,42 @@ const Profile = () => {
   });
 
   useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+
+        const res = await vendorService.getVendorProfile();
+
+        const vendor = res.vendor || {};
+
+        setFormData({
+          shopName: vendor.shopName || "",
+          shopSlug: vendor.shopSlug || "",
+          businessEmail: vendor.businessEmail || "",
+          phone: vendor.phone || "",
+          description: vendor.description || "",
+          gstNumber: vendor.gstNumber || "",
+          panNumber: vendor.panNumber || "",
+          upiId: vendor.upiId || "",
+          bankName: vendor.bankDetails?.bankName || "",
+          accountNumber: vendor.bankDetails?.accountNumber || "",
+          ifscCode: vendor.bankDetails?.ifscCode || "",
+          address: vendor.address || "",
+          city: vendor.city || "",
+          state: vendor.state || "",
+          country: vendor.country || "",
+          pincode: vendor.pincode || "",
+        });
+
+      } catch {
+        toast.error("Failed to load profile");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchProfile();
   }, []);
-
-  const fetchProfile = async () => {
-    try {
-      setLoading(true);
-
-      const res = await vendorService.getVendorProfile();
-
-      const vendor = res.vendor || {};
-
-      setFormData({
-        shopName: vendor.shopName || "",
-        shopSlug: vendor.shopSlug || "",
-        businessEmail: vendor.businessEmail || "",
-        phone: vendor.phone || "",
-        description: vendor.description || "",
-        gstNumber: vendor.gstNumber || "",
-        panNumber: vendor.panNumber || "",
-        upiId: vendor.upiId || "",
-        bankName: vendor.bankDetails?.bankName || "",
-        accountNumber: vendor.bankDetails?.accountNumber || "",
-        ifscCode: vendor.bankDetails?.ifscCode || "",
-        address: vendor.address || "",
-        city: vendor.city || "",
-        state: vendor.state || "",
-        country: vendor.country || "",
-        pincode: vendor.pincode || "",
-      });
-
-    } catch (err) {
-      toast.error("Failed to load profile");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleChange = (e) => {
     setFormData((prev) => ({

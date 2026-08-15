@@ -1,72 +1,193 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
-import { forgotPassword } from "../../services/authService";
+import authService from "../../services/authService";
 
-function ForgotPassword() {
+const ForgotPassword = () => {
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
 
-  const submitHandler = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!email.trim()) {
+      toast.error("Please enter your email");
+      return;
+    }
 
     try {
       setLoading(true);
 
-      const res = await forgotPassword(email);
+      const data = await authService.forgotPassword({
+        email: email.trim().toLowerCase(),
+      });
 
-      toast.success(res.message);
+      if (data?.success) {
+        toast.success(data.message || "OTP sent to your email");
 
-      setSent(true);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Something went wrong.");
+        navigate("/reset-password", {
+          state: {
+            email: email.trim().toLowerCase(),
+          },
+        });
+      } else {
+        toast.error(data?.message || "Unable to send OTP");
+      }
+    } catch (error) {
+      console.error(error);
+
+      toast.error(
+        error.response?.data?.message ||
+          "Something went wrong. Please try again."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex justify-center items-center px-4">
-      <div className="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md">
-        <h1 className="text-3xl font-bold text-center mb-3">Forgot Password</h1>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex items-center justify-center px-4 py-10">
 
-        <p className="text-gray-500 text-center mb-6">
-          Enter your registered email address.
-        </p>
+      <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden grid md:grid-cols-2">
 
-        {sent ? (
-          <div className="bg-green-100 text-green-700 rounded-lg p-4">
-            If an account exists, we've sent you a reset email.
+        {/* ==========================
+            LEFT BRANDING
+        ========================== */}
+
+        <div className="hidden md:flex bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 text-white p-12 flex-col justify-between">
+
+          <div>
+            <div className="text-3xl font-bold tracking-tight">
+              MultiVendor
+            </div>
+
+            <p className="text-blue-100 mt-4 text-lg leading-relaxed max-w-md">
+              One marketplace. Multiple vendors.
+              Everything you need in one place.
+            </p>
           </div>
-        ) : (
-          <form onSubmit={submitHandler}>
-            <input
-              type="email"
-              required
-              placeholder="Enter Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full border rounded-lg p-3 mb-5"
-            />
+
+          <div>
+            <div className="text-6xl mb-6">
+              🔐
+            </div>
+
+            <h2 className="text-4xl font-bold leading-tight">
+              Secure your
+              <br />
+              account.
+            </h2>
+
+            <p className="text-blue-100 mt-4 max-w-md">
+              Enter your registered email and we'll send
+              you a verification code to reset your password.
+            </p>
+          </div>
+
+          <div className="flex gap-4 text-sm text-blue-200">
+            <span>Secure</span>
+            <span>•</span>
+            <span>Private</span>
+            <span>•</span>
+            <span>Reliable</span>
+          </div>
+        </div>
+
+        {/* ==========================
+            RIGHT FORM
+        ========================== */}
+
+        <div className="p-7 sm:p-10 lg:p-12 flex items-center">
+
+          <div className="w-full">
+
+            {/* Back */}
 
             <button
-              disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg"
+              type="button"
+              onClick={() => navigate("/login")}
+              className="text-sm text-gray-500 hover:text-blue-600 font-medium mb-8"
             >
-              {loading ? "Sending..." : "Send Reset Link"}
+              ← Back to Login
             </button>
-          </form>
-        )}
 
-        <div className="mt-6 text-center">
-          <Link to="/login" className="text-blue-600">
-            Back to Login
-          </Link>
+            {/* Heading */}
+
+            <div className="mb-8">
+
+              <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center text-2xl mb-5">
+                🔑
+              </div>
+
+              <h1 className="text-3xl font-bold text-gray-900">
+                Forgot password?
+              </h1>
+
+              <p className="text-gray-500 mt-2 leading-relaxed">
+                No worries. Enter your registered email and
+                we'll send you an OTP to reset your password.
+              </p>
+
+            </div>
+
+            <form onSubmit={handleSubmit}>
+
+              {/* Email */}
+
+              <div>
+
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email address
+                </label>
+
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  className="w-full px-4 py-3.5 border border-gray-300 rounded-xl outline-none transition focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                />
+
+              </div>
+
+              {/* Button */}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-7 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-3.5 rounded-xl font-semibold transition-all"
+              >
+                {loading ? "Sending OTP..." : "Send OTP"}
+              </button>
+
+            </form>
+
+            {/* Bottom */}
+
+            <p className="text-center text-gray-500 mt-6">
+
+              Remember your password?{" "}
+
+              <button
+                type="button"
+                onClick={() => navigate("/login")}
+                className="text-blue-600 font-semibold hover:underline"
+              >
+                Login
+              </button>
+
+            </p>
+
+          </div>
+
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default ForgotPassword;
