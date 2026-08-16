@@ -3,6 +3,31 @@ const Vendor = require("../models/Vendor");
 const cloudinary = require("../config/cloudinary");
 const slugify = require("slugify");
 
+const uploadReviewMedia = async (files = []) => {
+  if (!files || files.length === 0) return [];
+
+  const uploadedMedia = [];
+
+  for (const file of files) {
+    const resourceType = file.mimetype?.startsWith("video/") ? "video" : "image";
+    const result = await cloudinary.uploader.upload(
+      `data:${file.mimetype};base64,${file.buffer.toString("base64")}`,
+      {
+        folder: "product-reviews",
+        resource_type: resourceType,
+      },
+    );
+
+    uploadedMedia.push({
+      public_id: result.public_id,
+      url: result.secure_url,
+      type: resourceType,
+    });
+  }
+
+  return uploadedMedia;
+};
+
 const updateProductRating = async (product) => {
   if (product.reviews.length === 0) {
     product.averageRating = 0;
@@ -234,7 +259,11 @@ const getSingleProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
       .populate("vendor")
-      .populate("category", "name");
+      .populate("category", "name")
+      .populate({
+        path: "reviews.user",
+        select: "name email",
+      });
 
     if (!product) {
       return res.status(404).json({
@@ -242,6 +271,10 @@ const getSingleProduct = async (req, res) => {
         message: "Product not found",
       });
     }
+
+    product.reviews = [...(product.reviews || [])].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+    );
 
     return res.status(200).json({
       success: true,
@@ -446,10 +479,22 @@ const deleteProduct = async (req, res) => {
 const addReview = async (req, res) => {
   try {
     const { rating, comment } = req.body;
-    if (rating < 1 || rating > 5) {
+    const parsedRating = Number(rating);
+
+    if (parsedRating < 1 || parsedRating > 5) {
       return res.status(400).json({
         success: false,
         message: "Rating must be between 1 and 5",
+      });
+    }
+
+    const cleanComment = typeof comment === "string" ? comment.trim() : "";
+    const mediaFiles = Array.isArray(req.files) ? req.files : [];
+
+    if (!cleanComment && mediaFiles.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please add a review comment or upload a photo/video",
       });
     }
 
@@ -473,10 +518,13 @@ const addReview = async (req, res) => {
       });
     }
 
+    const uploadedMedia = await uploadReviewMedia(mediaFiles);
+
     product.reviews.push({
       user: req.user._id,
-      rating: Number(rating),
-      comment,
+      rating: parsedRating,
+      comment: cleanComment,
+      media: uploadedMedia,
     });
 
     await updateProductRating(product);
@@ -497,10 +545,22 @@ const addReview = async (req, res) => {
 const updateReview = async (req, res) => {
   try {
     const { rating, comment } = req.body;
-    if (rating < 1 || rating > 5) {
+    const parsedRating = Number(rating);
+
+    if (parsedRating < 1 || parsedRating > 5) {
       return res.status(400).json({
         success: false,
         message: "Rating must be between 1 and 5",
+      });
+    }
+
+    const cleanComment = typeof comment === "string" ? comment.trim() : "";
+    const mediaFiles = Array.isArray(req.files) ? req.files : [];
+
+    if (!cleanComment && mediaFiles.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please add a review comment or upload a photo/video",
       });
     }
 
@@ -524,8 +584,11 @@ const updateReview = async (req, res) => {
       });
     }
 
-    review.rating = Number(rating);
-    review.comment = comment;
+    review.rating = parsedRating;
+    review.comment = cleanComment;
+    if (mediaFiles.length > 0) {
+      review.media = await uploadReviewMedia(mediaFiles);
+    }
 
     await updateProductRating(product);
 

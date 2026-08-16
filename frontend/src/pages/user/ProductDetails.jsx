@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { addToWishlist } from "../../redux/slices/wishlistSlice";
 import { useParams } from "react-router-dom";
 import MainLayout from "../../layouts/MainLayout";
-import { getSingleProduct ,  getRelatedProducts, } from "../../services/productService";
+import {
+  getSingleProduct,
+  getRelatedProducts,
+  addReview,
+} from "../../services/productService";
 import cartService from "../../services/cartService";
 import { toast } from "react-hot-toast";
-import { useSelector } from "react-redux";
-import axios from "axios";
 
 
 
@@ -17,6 +19,7 @@ function ProductDetails() {
 
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
+  const [selectedMedia, setSelectedMedia] = useState([]);
   const [loading, setLoading] = useState(false);
   const { id } = useParams();
   const [product, setProduct] = useState(null);
@@ -81,31 +84,42 @@ function ProductDetails() {
     );
   }
   const submitReview = async () => {
-  try {
-    setLoading(true);
-
-    await axios.post(
-      `${import.meta.env.VITE_API_URL}/products/${product._id}/review`,
-      {
-        rating,
-        comment,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
+    try {
+      if (!user) {
+        toast.error("Please login to write a review");
+        return;
       }
-    );
 
-    toast.success("Review Added");
+      if (!comment.trim() && selectedMedia.length === 0) {
+        toast.error("Please add a review comment or upload a photo/video");
+        return;
+      }
 
-    setComment("");
-    setRating(5);
-    await fetchProduct();
-  } finally {
-    setLoading(false);
-  }
-};
+      setLoading(true);
+
+      const formData = new FormData();
+      formData.append("rating", Number(rating));
+      if (comment.trim()) {
+        formData.append("comment", comment.trim());
+      }
+      selectedMedia.forEach((file) => {
+        formData.append("media", file);
+      });
+
+      await addReview(product._id, formData);
+
+      toast.success("Review Added");
+      setComment("");
+      setSelectedMedia([]);
+      setRating(5);
+      await fetchProduct();
+    } catch (error) {
+      const message = error?.response?.data?.message || "Failed to submit review";
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <MainLayout>
@@ -226,6 +240,24 @@ function ProductDetails() {
         className="border rounded w-full p-3"
       />
 
+      <div className="mt-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Upload Photo/Video (optional)
+        </label>
+        <input
+          type="file"
+          accept="image/*,video/*"
+          multiple
+          onChange={(e) => setSelectedMedia(Array.from(e.target.files || []))}
+          className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700"
+        />
+        {selectedMedia.length > 0 && (
+          <p className="mt-2 text-sm text-gray-500">
+            {selectedMedia.length} file(s) selected
+          </p>
+        )}
+      </div>
+
       <button
         onClick={submitReview}
         disabled={loading}
@@ -246,13 +278,40 @@ function ProductDetails() {
         key={review._id}
         className="border rounded-xl p-5 mb-5"
       >
-        <h4 className="font-semibold">
-          ⭐ {review.rating}/5
-        </h4>
+        <div className="flex items-center justify-between gap-3">
+          <h4 className="font-semibold">
+            ⭐ {review.rating}/5
+          </h4>
+          <span className="text-sm text-gray-500">
+            {review.user?.name || "Customer"}
+          </span>
+        </div>
 
-        <p className="mt-2">
-          {review.comment}
-        </p>
+        {review.comment && (
+          <p className="mt-2">{review.comment}</p>
+        )}
+
+        {review.media?.length > 0 && (
+          <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3">
+            {review.media.map((item, index) => (
+              <div key={`${review._id}-${index}`} className="overflow-hidden rounded-lg border">
+                {item.type === "video" ? (
+                  <video
+                    controls
+                    src={item.url}
+                    className="h-40 w-full object-cover bg-black"
+                  />
+                ) : (
+                  <img
+                    src={item.url}
+                    alt={`Review media ${index + 1}`}
+                    className="h-40 w-full object-cover"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
       </div>
 

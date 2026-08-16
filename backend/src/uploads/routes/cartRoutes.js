@@ -7,11 +7,11 @@ const {
   updateCart,
   removeItem,
   clearCart,
-} = require("../controllers/cartController");
+} = require("../../controllers/cartController");
 
 const {
   protect,
-} = require("../middleware/authMiddleware");
+} = require("../../middleware/authMiddleware");
 
 router.post("/add", protect, addToCart);
 router.get("/", protect, getCart);

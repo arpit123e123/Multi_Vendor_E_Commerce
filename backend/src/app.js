@@ -6,20 +6,20 @@ const helmet = require("helmet");
 const mongoSanitize = require("express-mongo-sanitize");
 const rateLimit = require("express-rate-limit");
 // Routes
-const authRoutes = require("./routes/authRoutes");
-const vendorRoutes = require("./routes/vendorRoutes");
-const userRoutes = require("./routes/userRoutes");
-const productRoutes = require("./routes/productRoutes");
-const categoryRoutes = require("./routes/categoryRoutes");
-const cartRoutes = require("./routes/cartRoutes");
-const addressRoutes = require("./routes/addressRoutes");
-const orderRoutes = require("./routes/orderRoutes");
-const paymentRoutes = require("./routes/paymentRoutes");
-const adminRoutes = require("./routes/adminRoutes");
-const reviewRoutes = require("./routes/reviewRoutes");
-const wishlistRoutes = require("./routes/wishlistRoutes");
-const couponRoutes = require("./routes/couponRoutes");
-
+const authRoutes = require("./uploads/routes/authRoutes");
+const vendorRoutes = require("./uploads/routes/vendorRoutes");
+const userRoutes = require("./uploads/routes/userRoutes");
+const productRoutes = require("./uploads/routes/productRoutes");
+const categoryRoutes = require("./uploads/routes/categoryRoutes");
+const cartRoutes = require("./uploads/routes/cartRoutes");
+const addressRoutes = require("./uploads/routes/addressRoutes");
+const orderRoutes = require("./uploads/routes/orderRoutes");
+const paymentRoutes = require("./uploads/routes/paymentRoutes");
+const adminRoutes = require("./uploads/routes/adminRoutes");
+const reviewRoutes = require("./uploads/routes/reviewRoutes");
+const wishlistRoutes = require("./uploads/routes/wishlistRoutes");
+const couponRoutes = require("./uploads/routes/couponRoutes");
+const aiRoutes = require("../routes/aiRoutes");
 const errorHandler = require("./middleware/errorMiddleware");
 
 const app = express();
@@ -75,7 +75,7 @@ app.use("/api/user", userRoutes);
 if (process.env.NODE_ENV !== "production") {
   app.use(morgan("dev"));
 }
-
+app.use("/api/ai", aiRoutes);
 /* ===========================
    Routes
 =========================== */

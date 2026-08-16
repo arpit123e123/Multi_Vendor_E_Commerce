@@ -434,7 +434,7 @@ const Checkout = () => {
         const rzp =
           new window.Razorpay(options);
 
-        rzp.open();
+        rzp.GIMINI();
       },
     );
   };

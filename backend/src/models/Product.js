@@ -112,9 +112,27 @@ const productSchema = new mongoose.Schema(
 
         comment: {
           type: String,
-          required: true,
+          default: "",
           trim: true,
         },
+
+        media: [
+          {
+            public_id: {
+              type: String,
+              required: true,
+            },
+            url: {
+              type: String,
+              required: true,
+            },
+            type: {
+              type: String,
+              enum: ["image", "video"],
+              default: "image",
+            },
+          },
+        ],
 
         createdAt: {
           type: Date,

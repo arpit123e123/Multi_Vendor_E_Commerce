@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { protect, authorize } = require("../middleware/authMiddleware");
+const { protect, authorize } = require("../../middleware/authMiddleware");
 
 const {
   createCoupon,
@@ -9,7 +9,7 @@ const {
   applyCoupon,
   deleteCoupon,
   
-} = require("../controllers/couponController");
+} = require("../../controllers/couponController");
 
 router.post("/", protect, authorize("admin"), createCoupon);
 

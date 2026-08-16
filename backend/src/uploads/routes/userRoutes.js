@@ -5,9 +5,9 @@ const {
   getProfile,
   updateProfile,
   changePassword,
-} = require("../controllers/userController");
+} = require("../../controllers/userController");
 
-const { protect } = require("../middleware/authMiddleware");
+const { protect } = require("../../middleware/authMiddleware");
 
 // Get Profile
 router.get("/profile", protect, getProfile);

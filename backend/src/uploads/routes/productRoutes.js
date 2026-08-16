@@ -10,21 +10,21 @@ const {
   deleteProduct,
   addReview,
   updateReview, deleteReview,
-} = require("../controllers/productController");
+} = require("../../controllers/productController");
 
 const {
   protect,
   authorize,
-} = require("../middleware/authMiddleware");
+} = require("../../middleware/authMiddleware");
 
-const upload = require("../middleware/upload");
+const upload = require("../../middleware/upload");
 
 // 👇 New Import
 const {
   createProductValidation,
-} = require("../validators/productValidators");
+} = require("../../validators/productValidators");
 
-const validate = require("../middleware/validate");
+const validate = require("../../middleware/validate");
 
 // 👇 Create Product Route
 router.post(
@@ -64,6 +64,7 @@ router.delete(
 router.post(
   "/:id/review",
   protect,
+  upload.array("media", 5),
   addReview
 );
 
@@ -71,6 +72,7 @@ router.post(
 router.put(
   "/:id/review",
   protect,
+  upload.array("media", 5),
   updateReview
 );
 

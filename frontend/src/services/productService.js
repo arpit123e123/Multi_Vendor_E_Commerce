@@ -79,7 +79,10 @@ export const deleteProduct = async (id) => {
  * Add Review
  */
 export const addReview = async (id, reviewData) => {
-  const { data } = await api.post(`/products/${id}/review`, reviewData);
+  const isFormData = reviewData instanceof FormData;
+  const { data } = await api.post(`/products/${id}/review`, reviewData, {
+    headers: isFormData ? {} : { "Content-Type": "application/json" },
+  });
 
   return data;
 };

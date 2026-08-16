@@ -12,7 +12,9 @@ const ForgotPassword = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!email.trim()) {
+    const cleanEmail = email.trim().toLowerCase();
+
+    if (!cleanEmail) {
       toast.error("Please enter your email");
       return;
     }
@@ -20,26 +22,25 @@ const ForgotPassword = () => {
     try {
       setLoading(true);
 
-      const data = await authService.forgotPassword({
-        email: email.trim().toLowerCase(),
-      });
+      const data = await authService.forgotPassword(cleanEmail);
 
       if (data?.success) {
         toast.success(data.message || "OTP sent to your email");
 
         navigate("/reset-password", {
           state: {
-            email: email.trim().toLowerCase(),
+            email: cleanEmail,
           },
         });
       } else {
         toast.error(data?.message || "Unable to send OTP");
       }
     } catch (error) {
-      console.error(error);
+      console.error("Forgot password error:", error);
 
       toast.error(
-        error.response?.data?.message ||
+        error?.response?.data?.message ||
+          error?.message ||
           "Something went wrong. Please try again."
       );
     } finally {
@@ -49,13 +50,11 @@ const ForgotPassword = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 flex items-center justify-center px-4 py-10">
-
       <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden grid md:grid-cols-2">
 
-        {/* ==========================
+        {/* =========================
             LEFT BRANDING
-        ========================== */}
-
+        ========================= */}
         <div className="hidden md:flex bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 text-white p-12 flex-col justify-between">
 
           <div>
@@ -95,26 +94,23 @@ const ForgotPassword = () => {
           </div>
         </div>
 
-        {/* ==========================
+        {/* =========================
             RIGHT FORM
-        ========================== */}
-
+        ========================= */}
         <div className="p-7 sm:p-10 lg:p-12 flex items-center">
 
           <div className="w-full">
 
             {/* Back */}
-
             <button
               type="button"
               onClick={() => navigate("/login")}
-              className="text-sm text-gray-500 hover:text-blue-600 font-medium mb-8"
+              className="text-sm text-gray-500 hover:text-blue-600 font-medium mb-8 transition"
             >
               ← Back to Login
             </button>
 
             {/* Heading */}
-
             <div className="mb-8">
 
               <div className="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center text-2xl mb-5">
@@ -132,10 +128,10 @@ const ForgotPassword = () => {
 
             </div>
 
+            {/* Form */}
             <form onSubmit={handleSubmit}>
 
               {/* Email */}
-
               <div>
 
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -148,14 +144,14 @@ const ForgotPassword = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
                   autoComplete="email"
-                  className="w-full px-4 py-3.5 border border-gray-300 rounded-xl outline-none transition focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={loading}
+                  className="w-full px-4 py-3.5 border border-gray-300 rounded-xl outline-none transition focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
                   required
                 />
 
               </div>
 
               {/* Button */}
-
               <button
                 type="submit"
                 disabled={loading}
@@ -167,7 +163,6 @@ const ForgotPassword = () => {
             </form>
 
             {/* Bottom */}
-
             <p className="text-center text-gray-500 mt-6">
 
               Remember your password?{" "}

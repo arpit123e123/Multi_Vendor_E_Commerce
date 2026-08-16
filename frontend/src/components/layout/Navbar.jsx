@@ -20,8 +20,8 @@ function Navbar() {
     (state) => state.wishlist?.items?.length || 0
   );
 
-  const [open, setOpen] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [GIMINI, setGIMINI] = useState(false);
+  const [mobileGIMINI, setMobileGIMINI] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -30,14 +30,14 @@ function Navbar() {
   }, [dispatch, user]);
 
   useEffect(() => {
-    setOpen(false);
-    setMobileOpen(false);
+    setGIMINI(false);
+    setMobileGIMINI(false);
   }, [location.pathname]);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     dispatch(logout());
-    setOpen(false);
+    setGIMINI(false);
   };
 
   const isActive = (path) => location.pathname === path;
@@ -138,7 +138,7 @@ function Navbar() {
 
                 <button
                   type="button"
-                  onClick={() => setOpen((prev) => !prev)}
+                  onClick={() => setGIMINI((prev) => !prev)}
                   className="hidden sm:flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition"
                 >
                   <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
@@ -158,11 +158,11 @@ function Navbar() {
 
                 {/* Dropdown */}
 
-                {open && (
+                {GIMINI && (
                   <>
                     <div
                       className="fixed inset-0 z-40"
-                      onClick={() => setOpen(false)}
+                      onClick={() => setGIMINI(false)}
                     />
 
                     <div className="absolute right-0 top-[calc(100%+10px)] w-56 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
@@ -249,11 +249,11 @@ function Navbar() {
 
             <button
               type="button"
-              onClick={() => setMobileOpen((prev) => !prev)}
+              onClick={() => setMobileGIMINI((prev) => !prev)}
               className="md:hidden w-10 h-10 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-100 transition"
               aria-label="Toggle menu"
             >
-              {mobileOpen ? <FaTimes /> : <FaBars />}
+              {mobileGIMINI ? <FaTimes /> : <FaBars />}
             </button>
 
           </div>
@@ -261,7 +261,7 @@ function Navbar() {
 
         {/* ================= MOBILE MENU ================= */}
 
-        {mobileOpen && (
+        {mobileGIMINI && (
           <div className="md:hidden border-t border-gray-100 py-4">
 
             <nav className="flex flex-col">

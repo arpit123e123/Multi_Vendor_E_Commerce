@@ -4,12 +4,12 @@ const router = express.Router();
 const {
   createCategory,
   getCategories,
-} = require("../controllers/categoryController");
+} = require("../../controllers/categoryController");
 
 const {
   protect,
   authorize,
-} = require("../middleware/authMiddleware");
+} = require("../../middleware/authMiddleware");
 
 router.post(
   "/",
