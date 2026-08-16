@@ -5,9 +5,9 @@ const {
   createOrder,
   getMyOrders,
   updateOrderStatus,
-} = require("../../controllers/orderController");
+} = require("../src/controllers/orderController");
 
-const { protect, authorize } = require("../../middleware/authMiddleware");
+const { protect, authorize } = require("../src/middleware/authMiddleware");
 
 // User create order
 router.post("/", protect, createOrder);

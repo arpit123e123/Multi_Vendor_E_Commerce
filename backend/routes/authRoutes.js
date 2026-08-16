@@ -6,7 +6,7 @@ const {
   login,
   forgotPassword,
   resetPassword,
-} = require("../../controllers/authControllers");
+} = require("../src/controllers/authControllers");
 
 // Register
 router.post("/register", register);

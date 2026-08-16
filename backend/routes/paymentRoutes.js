@@ -7,9 +7,9 @@ const {
   verifyPayment,
   paymentFailed,
   razorpayWebhook,
-} = require("../../controllers/paymentController");
+} = require("../src/controllers/paymentController");
 
-const { protect } = require("../../middleware/authMiddleware");
+const { protect } = require("../src/middleware/authMiddleware");
 
 // User
 router.post("/create-order", protect, createPaymentOrder);

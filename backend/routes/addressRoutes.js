@@ -5,11 +5,11 @@ const router = express.Router();
 const {
     addAddress,
     getAddresses
-} = require("../../controllers/addressController");
+} = require("../src/controllers/addressController");
 
 const {
     protect
-} = require("../../middleware/authMiddleware");
+} = require("../src/middleware/authMiddleware");
 
 router.post("/",protect,addAddress);
 

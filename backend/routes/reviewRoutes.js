@@ -6,10 +6,10 @@ const {
   getProductReviews,
   updateReview,
   deleteReview,
-} = require("../../controllers/reviewController");
+} = require("../src/controllers/reviewController");
 
-const { protect } = require("../../middleware/authMiddleware");
-const upload = require("../../middleware/upload");
+const { protect } = require("../src/middleware/authMiddleware");
+const upload = require("../src/middleware/upload");
 
 // Create Review
 router.post("/", protect, upload.array("media", 5), createReview);

@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
-const { protect, authorize } = require("../../middleware/authMiddleware");
-const upload = require("../../middleware/upload");
+const { protect, authorize } = require("../src/middleware/authMiddleware");
+const upload = require("../src/middleware/upload");
 const {
   becomeVendor,
   getVendorProfile,
@@ -21,7 +21,7 @@ const {
   deleteVendorProduct,
   updateVendorProfile,
   changeProductStatus,
-} = require("../../controllers/vendorController");
+} = require("../src/controllers/vendorController");
 
 // =========================
 // User Routes

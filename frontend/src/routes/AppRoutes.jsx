@@ -23,14 +23,12 @@ import ResetPassword from "../pages/Auth/ResetPassword";
 // ADMIN
 // =========================
 import Dashboard from "../pages/admin/Dashboard";
-import AdminProducts from "../pages/admin/Products";
 import Categories from "../pages/admin/Categories";
-import AdminOrders from "../pages/admin/Orders";
 import Users from "../pages/admin/Users";
 import Vendors from "../pages/admin/Vendors";
-import AdminLayout from "../components/admin/AdminLayout";
 import Coupons from "../pages/admin/Coupons";
 import Settings from "../pages/admin/Settings";
+import AdminLayout from "../components/admin/AdminLayout";
 
 // =========================
 // VENDOR
@@ -62,15 +60,16 @@ const RoleHome = () => {
     return <Home />;
   }
 
-  if (user.role === "admin") {
-    return <Navigate to="/admin" replace />;
-  }
+  switch (user.role) {
+    case "admin":
+      return <Navigate to="/admin" replace />;
 
-  if (user.role === "vendor") {
-    return <Navigate to="/vendor" replace />;
-  }
+    case "vendor":
+      return <Navigate to="/vendor" replace />;
 
-  return <Home />;
+    default:
+      return <Home />;
+  }
 };
 
 // =========================
@@ -83,31 +82,24 @@ function AppRoutes() {
         {/* =========================
             ROOT
         ========================= */}
-
         <Route path="/" element={<RoleHome />} />
 
         {/* =========================
             AUTH
         ========================= */}
-
         <Route path="/auth" element={<Auth />} />
-
         <Route path="/login" element={<Auth />} />
-
         <Route path="/register" element={<Auth />} />
 
         {/* =========================
             PUBLIC PRODUCTS
         ========================= */}
-
         <Route path="/products" element={<Products />} />
-
         <Route path="/products/:id" element={<ProductDetails />} />
 
         {/* =========================
-            CUSTOMER ONLY
+            CUSTOMER
         ========================= */}
-
         <Route
           path="/cart"
           element={
@@ -155,8 +147,9 @@ function AppRoutes() {
 
         {/* =========================
             ADMIN
+            Admin = platform management
+            No product/order operations
         ========================= */}
-
         <Route
           path="/admin"
           element={
@@ -167,25 +160,21 @@ function AppRoutes() {
         >
           <Route index element={<Dashboard />} />
 
-          <Route path="settings" element={<Settings />} />
-
           <Route path="users" element={<Users />} />
 
           <Route path="vendors" element={<Vendors />} />
 
-          <Route path="products" element={<AdminProducts />} />
-
           <Route path="categories" element={<Categories />} />
 
-          <Route path="orders" element={<AdminOrders />} />
-
           <Route path="coupons" element={<Coupons />} />
+
+          <Route path="settings" element={<Settings />} />
         </Route>
 
         {/* =========================
             VENDOR
+            Vendor = own products + orders
         ========================= */}
-
         <Route
           path="/vendor"
           element={
@@ -212,7 +201,6 @@ function AppRoutes() {
         {/* =========================
             BECOME VENDOR
         ========================= */}
-
         <Route
           path="/become-vendor"
           element={
@@ -225,7 +213,6 @@ function AppRoutes() {
         {/* =========================
             PASSWORD RESET
         ========================= */}
-
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
         <Route path="/reset-password/:token" element={<ResetPassword />} />
@@ -233,7 +220,6 @@ function AppRoutes() {
         {/* =========================
             FALLBACK
         ========================= */}
-
         <Route path="*" element={<RoleHome />} />
       </Routes>
     </BrowserRouter>

@@ -20,8 +20,14 @@ function Navbar() {
     (state) => state.wishlist?.items?.length || 0
   );
 
-  const [GIMINI, setGIMINI] = useState(false);
-  const [mobileGIMINI, setMobileGIMINI] = useState(false);
+  const [accountMenu, setAccountMenu] = useState({
+    pathname: location.pathname,
+    isOpen: false,
+  });
+  const [mobileMenu, setMobileMenu] = useState({
+    pathname: location.pathname,
+    isOpen: false,
+  });
 
   useEffect(() => {
     if (user) {
@@ -29,15 +35,35 @@ function Navbar() {
     }
   }, [dispatch, user]);
 
-  useEffect(() => {
-    setGIMINI(false);
-    setMobileGIMINI(false);
-  }, [location.pathname]);
+  const isAccountMenuOpen =
+    accountMenu.pathname === location.pathname && accountMenu.isOpen;
+
+  const isMobileMenuOpen =
+    mobileMenu.pathname === location.pathname && mobileMenu.isOpen;
+
+  const closeMenus = () => {
+    setAccountMenu({ pathname: location.pathname, isOpen: false });
+    setMobileMenu({ pathname: location.pathname, isOpen: false });
+  };
+
+  const toggleAccountMenu = () => {
+    setAccountMenu((prev) => ({
+      pathname: location.pathname,
+      isOpen: prev.pathname === location.pathname ? !prev.isOpen : true,
+    }));
+  };
+
+  const toggleMobileMenu = () => {
+    setMobileMenu((prev) => ({
+      pathname: location.pathname,
+      isOpen: prev.pathname === location.pathname ? !prev.isOpen : true,
+    }));
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     dispatch(logout());
-    setGIMINI(false);
+    closeMenus();
   };
 
   const isActive = (path) => location.pathname === path;
@@ -46,7 +72,7 @@ function Navbar() {
     <header className="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        <div className="h-[72px] flex items-center justify-between">
+        <div className="h-18 flex items-center justify-between">
 
           {/* ================= LOGO ================= */}
 
@@ -106,7 +132,7 @@ function Navbar() {
                 <FaHeart className="text-[17px]" />
 
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 min-w-4.5 h-4.5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                     {wishlistCount > 99 ? "99+" : wishlistCount}
                   </span>
                 )}
@@ -124,7 +150,7 @@ function Navbar() {
                 <FaShoppingCart className="text-[17px]" />
 
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 min-w-4.5 h-4.5 px-1 bg-blue-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                     {cartCount > 99 ? "99+" : cartCount}
                   </span>
                 )}
@@ -138,7 +164,7 @@ function Navbar() {
 
                 <button
                   type="button"
-                  onClick={() => setGIMINI((prev) => !prev)}
+                  onClick={toggleAccountMenu}
                   className="hidden sm:flex items-center gap-2.5 pl-2 pr-3 py-1.5 rounded-xl border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition"
                 >
                   <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center">
@@ -158,11 +184,11 @@ function Navbar() {
 
                 {/* Dropdown */}
 
-                {GIMINI && (
+                {isAccountMenuOpen && (
                   <>
                     <div
                       className="fixed inset-0 z-40"
-                      onClick={() => setGIMINI(false)}
+                      onClick={closeMenus}
                     />
 
                     <div className="absolute right-0 top-[calc(100%+10px)] w-56 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
@@ -249,11 +275,11 @@ function Navbar() {
 
             <button
               type="button"
-              onClick={() => setMobileGIMINI((prev) => !prev)}
+              onClick={toggleMobileMenu}
               className="md:hidden w-10 h-10 rounded-lg flex items-center justify-center text-gray-700 hover:bg-gray-100 transition"
               aria-label="Toggle menu"
             >
-              {mobileGIMINI ? <FaTimes /> : <FaBars />}
+              {isMobileMenuOpen ? <FaTimes /> : <FaBars />}
             </button>
 
           </div>
@@ -261,7 +287,7 @@ function Navbar() {
 
         {/* ================= MOBILE MENU ================= */}
 
-        {mobileGIMINI && (
+        {isMobileMenuOpen && (
           <div className="md:hidden border-t border-gray-100 py-4">
 
             <nav className="flex flex-col">

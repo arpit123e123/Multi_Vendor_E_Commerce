@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 
-const { protect, authorize } = require("../../middleware/authMiddleware");
+const { protect, authorize } = require("../src/middleware/authMiddleware");
 
 const {
   getAllOrders,
@@ -16,7 +16,7 @@ const {
   rejectVendor,
   updateUserStatus,
   deleteUser,
-} = require("../../controllers/adminController");
+} = require("../src/controllers/adminController");
 
 router.get("/orders", protect, authorize("admin"), getAllOrders);
 router.patch("/orders/:id", protect, authorize("admin"), updateOrderStatus);
