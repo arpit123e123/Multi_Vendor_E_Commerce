@@ -26,6 +26,8 @@ import Dashboard from "../pages/admin/Dashboard";
 import Categories from "../pages/admin/Categories";
 import Users from "../pages/admin/Users";
 import Vendors from "../pages/admin/Vendors";
+import AdminProducts from "../pages/admin/Products";
+import AdminOrders from "../pages/admin/Orders";
 import Coupons from "../pages/admin/Coupons";
 import Settings from "../pages/admin/Settings";
 import AdminLayout from "../components/admin/AdminLayout";
@@ -43,6 +45,18 @@ import BecomeVendor from "../pages/vendor/BecomeVendor";
 
 import ProtectedRoute from "../components/ProtectedRoute";
 import VendorLayout from "../layouts/VendorLayout";
+
+const AdminProtectedLayout = () => (
+  <ProtectedRoute role="admin">
+    <AdminLayout />
+  </ProtectedRoute>
+);
+
+const VendorProtectedLayout = () => (
+  <ProtectedRoute role="vendor">
+    <VendorLayout />
+  </ProtectedRoute>
+);
 
 // =========================
 // ROLE HOME
@@ -150,13 +164,17 @@ function AppRoutes() {
             Admin = platform management
             No product/order operations
         ========================= */}
+        <Route path="/admin/products" element={<AdminProtectedLayout />}>
+          <Route index element={<AdminProducts />} />
+        </Route>
+
+        <Route path="/admin/orders" element={<AdminProtectedLayout />}>
+          <Route index element={<AdminOrders />} />
+        </Route>
+
         <Route
-          path="/admin"
-          element={
-            <ProtectedRoute role="admin">
-              <AdminLayout />
-            </ProtectedRoute>
-          }
+          path="/admin/*"
+          element={<AdminProtectedLayout />}
         >
           <Route index element={<Dashboard />} />
 
@@ -164,7 +182,11 @@ function AppRoutes() {
 
           <Route path="vendors" element={<Vendors />} />
 
+          <Route path="products" element={<AdminProducts />} />
+
           <Route path="categories" element={<Categories />} />
+
+          <Route path="orders" element={<AdminOrders />} />
 
           <Route path="coupons" element={<Coupons />} />
 
@@ -176,12 +198,8 @@ function AppRoutes() {
             Vendor = own products + orders
         ========================= */}
         <Route
-          path="/vendor"
-          element={
-            <ProtectedRoute role="vendor">
-              <VendorLayout />
-            </ProtectedRoute>
-          }
+          path="/vendor/*"
+          element={<VendorProtectedLayout />}
         >
           <Route index element={<VendorDashboard />} />
 
