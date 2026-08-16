@@ -1,6 +1,8 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-// User Pages
+// =========================
+// USER PAGES
+// =========================
 import Home from "../pages/user/Home";
 import Products from "../pages/user/Products";
 import ProductDetails from "../pages/user/ProductDetails";
@@ -10,12 +12,16 @@ import Checkout from "../pages/user/Checkout";
 import Orders from "../pages/user/Orders";
 import Profile from "../pages/user/Profile";
 
-// Auth
+// =========================
+// AUTH
+// =========================
 import Auth from "../pages/Auth/Auth";
 import ForgotPassword from "../pages/Auth/ForgotPassword";
 import ResetPassword from "../pages/Auth/ResetPassword";
 
-// Admin Pages
+// =========================
+// ADMIN
+// =========================
 import Dashboard from "../pages/admin/Dashboard";
 import AdminProducts from "../pages/admin/Products";
 import Categories from "../pages/admin/Categories";
@@ -26,7 +32,9 @@ import AdminLayout from "../components/admin/AdminLayout";
 import Coupons from "../pages/admin/Coupons";
 import Settings from "../pages/admin/Settings";
 
-// Vendor Pages
+// =========================
+// VENDOR
+// =========================
 import VendorDashboard from "../pages/vendor/Dashboard";
 import AddProduct from "../pages/vendor/AddProduct";
 import VendorProducts from "../pages/vendor/Products";
@@ -38,33 +46,72 @@ import BecomeVendor from "../pages/vendor/BecomeVendor";
 import ProtectedRoute from "../components/ProtectedRoute";
 import VendorLayout from "../layouts/VendorLayout";
 
+// =========================
+// ROLE HOME
+// =========================
+const RoleHome = () => {
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    localStorage.removeItem("user");
+  }
+
+  if (!user) {
+    return <Home />;
+  }
+
+  if (user.role === "admin") {
+    return <Navigate to="/admin" replace />;
+  }
+
+  if (user.role === "vendor") {
+    return <Navigate to="/vendor" replace />;
+  }
+
+  return <Home />;
+};
+
+// =========================
+// APP ROUTES
+// =========================
 function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* =========================
+            ROOT
+        ========================= */}
 
-        {/* ================= USER ================= */}
+        <Route path="/" element={<RoleHome />} />
 
-        <Route path="/" element={<Home />} />
+        {/* =========================
+            AUTH
+        ========================= */}
 
-        {/* Single Login + Register Page */}
         <Route path="/auth" element={<Auth />} />
 
-        {/* Keep old URLs working */}
         <Route path="/login" element={<Auth />} />
+
         <Route path="/register" element={<Auth />} />
+
+        {/* =========================
+            PUBLIC PRODUCTS
+        ========================= */}
 
         <Route path="/products" element={<Products />} />
 
-        <Route
-          path="/products/:id"
-          element={<ProductDetails />}
-        />
+        <Route path="/products/:id" element={<ProductDetails />} />
+
+        {/* =========================
+            CUSTOMER ONLY
+        ========================= */}
 
         <Route
           path="/cart"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute role="customer">
               <Cart />
             </ProtectedRoute>
           }
@@ -73,7 +120,7 @@ function AppRoutes() {
         <Route
           path="/wishlist"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute role="customer">
               <Wishlist />
             </ProtectedRoute>
           }
@@ -82,7 +129,7 @@ function AppRoutes() {
         <Route
           path="/checkout"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute role="customer">
               <Checkout />
             </ProtectedRoute>
           }
@@ -91,7 +138,7 @@ function AppRoutes() {
         <Route
           path="/orders"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute role="customer">
               <Orders />
             </ProtectedRoute>
           }
@@ -100,13 +147,15 @@ function AppRoutes() {
         <Route
           path="/profile"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute role="customer">
               <Profile />
             </ProtectedRoute>
           }
         />
 
-        {/* ================= ADMIN ================= */}
+        {/* =========================
+            ADMIN
+        ========================= */}
 
         <Route
           path="/admin"
@@ -124,28 +173,18 @@ function AppRoutes() {
 
           <Route path="vendors" element={<Vendors />} />
 
-          <Route
-            path="products"
-            element={<AdminProducts />}
-          />
+          <Route path="products" element={<AdminProducts />} />
 
-          <Route
-            path="categories"
-            element={<Categories />}
-          />
+          <Route path="categories" element={<Categories />} />
 
-          <Route
-            path="orders"
-            element={<AdminOrders />}
-          />
+          <Route path="orders" element={<AdminOrders />} />
 
-          <Route
-            path="coupons"
-            element={<Coupons />}
-          />
+          <Route path="coupons" element={<Coupons />} />
         </Route>
 
-        {/* ================= VENDOR ================= */}
+        {/* =========================
+            VENDOR
+        ========================= */}
 
         <Route
           path="/vendor"
@@ -155,68 +194,50 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         >
-          <Route
-            path="analytics"
-            element={<Analytics />}
-          />
+          <Route index element={<VendorDashboard />} />
 
-          <Route
-            index
-            element={<VendorDashboard />}
-          />
+          <Route path="dashboard" element={<VendorDashboard />} />
 
-          <Route
-            path="dashboard"
-            element={<VendorDashboard />}
-          />
+          <Route path="analytics" element={<Analytics />} />
 
-          <Route
-            path="products"
-            element={<VendorProducts />}
-          />
+          <Route path="products" element={<VendorProducts />} />
 
-          <Route
-            path="add-product"
-            element={<AddProduct />}
-          />
+          <Route path="add-product" element={<AddProduct />} />
 
-          <Route
-            path="orders"
-            element={<VendorOrders />}
-          />
+          <Route path="orders" element={<VendorOrders />} />
 
-          <Route
-            path="profile"
-            element={<VendorProfile />}
-          />
+          <Route path="profile" element={<VendorProfile />} />
         </Route>
 
-        {/* ================= BECOME VENDOR ================= */}
+        {/* =========================
+            BECOME VENDOR
+        ========================= */}
 
         <Route
           path="/become-vendor"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute role="customer">
               <BecomeVendor />
             </ProtectedRoute>
           }
         />
 
-        {/* ================= PASSWORD ================= */}
+        {/* =========================
+            PASSWORD RESET
+        ========================= */}
 
-        <Route
-          path="/forgot-password"
-          element={<ForgotPassword />}
-        />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        <Route
-          path="/reset-password"
-          element={<ResetPassword />}
-        />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
+        {/* =========================
+            FALLBACK
+        ========================= */}
+
+        <Route path="*" element={<RoleHome />} />
       </Routes>
     </BrowserRouter>
-  ); 
+  );
 }
 
 export default AppRoutes;

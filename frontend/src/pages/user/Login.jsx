@@ -14,44 +14,97 @@ const Login = () => {
     password: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [e.target.name]: e.target.value,
-    });
+    }));
+  };
+
+  const getRoleHome = (role) => {
+    if (role === "admin") {
+      return "/admin";
+    }
+
+    if (role === "vendor") {
+      return "/vendor";
+    }
+
+    return "/";
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const result = await dispatch(login(formData));
+    if (loading) return;
 
-    if (login.fulfilled.match(result)) {
-      await dispatch(getCart());
+    setLoading(true);
 
-      const user = result.payload.user;
+    try {
+      const result = await dispatch(
+        login({
+          email: formData.email.trim().toLowerCase(),
+          password: formData.password,
+        })
+      );
 
-      toast.success("Login Successful");
+      if (login.fulfilled.match(result)) {
+        const user = result.payload?.user;
 
-      if (user?.role === "admin") {
-        navigate("/admin");
-      } else if (user?.role === "vendor") {
-        navigate("/vendor");
+        if (!user?.role) {
+          toast.error("Invalid account information");
+          return;
+        }
+
+        // Cart is only required for customer accounts
+        if (user.role === "customer") {
+          try {
+            await dispatch(getCart()).unwrap();
+          } catch {
+            // Cart failure should not block login
+          }
+        }
+
+        toast.success("Login Successful");
+
+        // Role based redirect
+        navigate(getRoleHome(user.role), {
+          replace: true,
+        });
       } else {
-        navigate("/");
+        toast.error(
+          result.payload?.message ||
+            "Invalid email or password"
+        );
       }
-    } else {
-      toast.error(result.payload?.message || "Login Failed");
+    } catch (error) {
+      console.error("Login error:", error);
+
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Login Failed"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
+    <div className="flex justify-center items-center min-h-screen bg-gray-100 px-4">
+
       <form
         onSubmit={handleSubmit}
         className="bg-white shadow-xl rounded-2xl p-8 w-full max-w-md"
       >
-        <h2 className="text-3xl font-bold text-center mb-6">Login</h2>
+
+        <h2 className="text-3xl font-bold text-center mb-6">
+          Login
+        </h2>
+
+        {/* Email */}
 
         <input
           type="email"
@@ -59,9 +112,12 @@ const Login = () => {
           placeholder="Enter Email"
           value={formData.email}
           onChange={handleChange}
-          className="w-full border p-3 rounded-lg mb-4"
+          className="w-full border p-3 rounded-lg mb-4 outline-none focus:ring-2 focus:ring-blue-500"
+          autoComplete="email"
           required
         />
+
+        {/* Password */}
 
         <input
           type="password"
@@ -69,10 +125,15 @@ const Login = () => {
           placeholder="Enter Password"
           value={formData.password}
           onChange={handleChange}
-          className="w-full border p-3 rounded-lg mb-6"
+          className="w-full border p-3 rounded-lg mb-6 outline-none focus:ring-2 focus:ring-blue-500"
+          autoComplete="current-password"
           required
         />
+
+        {/* Forgot Password */}
+
         <div className="flex justify-end mb-6">
+
           <button
             type="button"
             onClick={() => navigate("/forgot-password")}
@@ -80,14 +141,21 @@ const Login = () => {
           >
             Forgot Password?
           </button>
+
         </div>
+
+        {/* Login Button */}
+
         <button
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold"
+          disabled={loading}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white py-3 rounded-lg font-semibold transition"
         >
-          Login
+          {loading ? "Logging in..." : "Login"}
         </button>
+
       </form>
+
     </div>
   );
 };
