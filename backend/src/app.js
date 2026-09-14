@@ -39,14 +39,41 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:5173",
 
-  // Vercel production
-  "https://multi-vendor-e-commerce-o58m10dfd-ar8.vercel.app",
-
-  // Previous deployments
-  "https://multi-vendor-e-commerce-sand.vercel.app",
+  // Main Vercel production URL
   "https://multi-vendor-e-commerce-ar8.vercel.app",
+
+  // Previous Vercel deployments
+  "https://multi-vendor-e-commerce-sand.vercel.app",
   "https://multi-vendor-e-commerce-git-master-ar8.vercel.app",
-];
+
+  // Backend configured frontend URL
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
+// Check whether an origin is allowed
+const isAllowedOrigin = (origin) => {
+  if (!origin) {
+    return true;
+  }
+
+  // Exact allowed origins
+  if (allowedOrigins.includes(origin)) {
+    return true;
+  }
+
+  // Allow Vercel deployment URLs for this project
+  // Example:
+  // https://multi-vendor-e-commerce-gfd9v1xy0-ar8.vercel.app
+  if (
+    /^https:\/\/multi-vendor-e-commerce-[a-z0-9-]+-ar8\.vercel\.app$/i.test(
+      origin
+    )
+  ) {
+    return true;
+  }
+
+  return false;
+};
 
 // ===========================
 // CORS
@@ -55,20 +82,24 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests without origin
-      // Example: Postman, server-to-server
-      if (!origin) {
+      if (isAllowedOrigin(origin)) {
         return callback(null, true);
       }
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+      console.error("❌ CORS blocked origin:", origin);
 
       return callback(new Error("Not allowed by CORS"));
     },
 
     credentials: true,
+
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+    ],
   })
 );
 
@@ -163,7 +194,7 @@ app.use("/api/coupon", couponRoutes);
 
 // ===========================
 // 404
-// =========================== 
+// ===========================
 
 app.use((req, res) => {
   res.status(404).json({
