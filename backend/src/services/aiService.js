@@ -18,28 +18,106 @@ const MODEL_CANDIDATES = [
 ].filter(Boolean);
 
 const normalizeText = (value = "") =>
-  value
+  String(value)
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
+const escapeRegex = (value = "") =>
+  String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * Extract budget from natural language.
+ *
+ * Examples:
+ * "under 1000"
+ * "below ₹2000"
+ * "books under 500"
+ * "upto 1500"
+ */
 const parseBudgetFromMessage = (message) => {
   const text = normalizeText(message);
 
   const budgetMatch = text.match(
-    /(?:under|below|budget|max|max budget|upto|up to|less than)\s*(\d+(?:,\d+)?)/i,
+    /(?:under|below|budget|max|max budget|upto|up to|less than)\s*(?:rs|inr|₹)?\s*(\d+(?:,\d+)?)/i
   );
 
   if (budgetMatch) {
     return Number(budgetMatch[1].replace(/,/g, ""));
   }
 
-  const priceMatch = text.match(/(\d+(?:,\d+)?)/);
+  return null;
+};
 
-  return priceMatch
-    ? Number(priceMatch[1].replace(/,/g, ""))
-    : null;
+/**
+ * Extract the user's likely product intent.
+ *
+ * This is intentionally conservative.
+ * We do NOT treat "book" as matching "ultrabook".
+ */
+const extractProductIntent = (message) => {
+  const text = normalizeText(message);
+
+  const intentWords = [
+    "book",
+    "books",
+    "novel",
+    "novels",
+    "textbook",
+    "textbooks",
+    "laptop",
+    "laptops",
+    "mobile",
+    "mobiles",
+    "phone",
+    "phones",
+    "smartphone",
+    "smartphones",
+    "tablet",
+    "tablets",
+    "headphone",
+    "headphones",
+    "earphone",
+    "earphones",
+    "earbuds",
+    "watch",
+    "watches",
+    "shoes",
+    "shoe",
+    "shirt",
+    "shirts",
+    "jeans",
+    "furniture",
+    "chair",
+    "chairs",
+    "sofa",
+    "sofas",
+    "camera",
+    "cameras",
+    "television",
+    "tv",
+    "monitor",
+    "monitors",
+    "keyboard",
+    "keyboards",
+    "mouse",
+    "mice",
+  ];
+
+  const words = text.split(" ");
+
+  return intentWords.find((intent) => {
+    if (words.includes(intent)) {
+      return true;
+    }
+
+    if (intent.endsWith("s") && words.includes(intent.slice(0, -1))) {
+      return true;
+    }
+
+    return false;
+  }) || null;
 };
 
 const getShortNaturalReply = (message) => {
@@ -73,12 +151,19 @@ const getShortNaturalReply = (message) => {
   }
 
   if (howAreYouPattern.test(text)) {
-    return "I’m good — ready to help you shop. What are you looking for today?";
+    return "I’m good, ready to help you shop. What are you looking for today?";
   }
 
   return null;
 };
 
+/**
+ * Fallback recommendation.
+ *
+ * Important:
+ * "book" must match a real word, not a substring.
+ * Therefore "book" will NOT match "ultrabook".
+ */
 const buildFallbackRecommendation = (message, products = []) => {
   const fastReply = getShortNaturalReply(message);
 
@@ -96,33 +181,103 @@ I couldn’t find a matching product in the catalog right now, but you can searc
   }
 
   const budget = parseBudgetFromMessage(message);
+  const intent = extractProductIntent(message);
   const query = normalizeText(message);
 
   const scoredProducts = products
     .map((product) => {
-      const text = normalizeText(
-        `${product.name} ${product.description || ""} ${
-          product.brand || ""
-        } ${product.category?.name || ""}`,
+      const productName = normalizeText(product.name);
+      const description = normalizeText(product.description || "");
+      const brand = normalizeText(product.brand || "");
+      const category = normalizeText(product.category?.name || "");
+
+      const productWords = new Set(
+        `${productName} ${description} ${brand} ${category}`
+          .split(" ")
+          .filter(Boolean)
       );
 
       let score = 0;
 
+      /**
+       * Exact product intent matching.
+       *
+       * "book" matches:
+       * "book"
+       * "books"
+       *
+       * but NOT:
+       * "ultrabook"
+       */
+      if (intent) {
+        const singularIntent = intent.endsWith("s")
+          ? intent.slice(0, -1)
+          : intent;
+
+        const pluralIntent = `${singularIntent}s`;
+
+        if (
+          productWords.has(singularIntent) ||
+          productWords.has(pluralIntent)
+        ) {
+          score += 20;
+        }
+
+        /**
+         * Category is especially important.
+         */
+        if (category === singularIntent || category === pluralIntent) {
+          score += 30;
+        }
+
+        /**
+         * Prevent obvious false positives.
+         *
+         * Example:
+         * User asks "book"
+         * Product = "Ultrabook Laptop"
+         *
+         * "book" appears inside "ultrabook", but that is NOT
+         * considered a valid book match.
+         */
+        if (
+          singularIntent === "book" &&
+          (productName.includes("ultrabook") ||
+            productName.includes("notebook") ||
+            productName.includes("macbook"))
+        ) {
+          score -= 40;
+        }
+      }
+
+      /**
+       * Exact token matching instead of substring matching.
+       */
       const tokens = query.split(" ").filter(Boolean);
 
       tokens.forEach((token) => {
         if (!token || token.length <= 2) return;
 
-        if (text.includes(token)) {
+        if (productWords.has(token)) {
           score += 3;
         }
       });
 
-      if (budget && product.price <= budget) {
-        score += 8;
+      /**
+       * Budget should be a strong filter.
+       */
+      if (budget !== null) {
+        if (Number(product.price) <= budget) {
+          score += 12;
+        } else {
+          score -= 15;
+        }
       }
 
-      if (product.stock > 0) {
+      /**
+       * In-stock products get a small boost.
+       */
+      if (Number(product.stock) > 0) {
         score += 2;
       }
 
@@ -131,30 +286,52 @@ I couldn’t find a matching product in the catalog right now, but you can searc
         score,
       };
     })
-    .filter((item) => item.score > 0)
+    .filter((item) => {
+      /**
+       * If user explicitly requested a product type,
+       * don't return unrelated products just because
+       * they are cheap or in stock.
+       */
+      if (intent) {
+        return item.score >= 20;
+      }
+
+      return item.score > 0;
+    })
     .sort(
       (a, b) =>
         b.score - a.score ||
-        a.product.price - b.product.price,
+        Number(a.product.price) - Number(b.product.price)
     );
 
-  const selected = (
-    scoredProducts.length
-      ? scoredProducts
-      : products.map((product) => ({
-          product,
-          score: 1,
-        }))
-  )
+  /**
+   * If the user clearly asked for a product type but
+   * there are no valid matches, do NOT show unrelated products.
+   */
+  if (intent && scoredProducts.length === 0) {
+    return `I couldn't find a suitable ${intent} in the ShopHub catalog${
+      budget !== null ? ` under ₹${budget}` : ""
+    }.
+
+Try another category, brand, or price range and I’ll help you find a better match.`;
+  }
+
+  const selected = scoredProducts
     .slice(0, 4)
     .map(({ product }) => product);
+
+  if (selected.length === 0) {
+    return `${generalHelp}
+
+I couldn’t find a matching product in the catalog right now.`;
+  }
 
   const productList = selected
     .map(
       (product) =>
         `• ${product.name} — ₹${product.price}${
           product.brand ? ` (${product.brand})` : ""
-        }\n  Link: /products/${product._id}`,
+        }\n  Link: /products/${product._id}`
     )
     .join("\n");
 
@@ -165,6 +342,9 @@ ${productList}
 ${generalHelp}`;
 };
 
+/**
+ * Build the AI prompt.
+ */
 const createGeminiPrompt = (message, products = []) => {
   const productContext = products
     .map(
@@ -172,60 +352,85 @@ const createGeminiPrompt = (message, products = []) => {
 Product ID: ${product._id}
 Product Link: /products/${product._id}
 Name: ${product.name}
-Brand: ${product.brand}
-Description: ${product.description}
+Brand: ${product.brand || ""}
+Description: ${product.description || ""}
 Price: ₹${product.price}
 Discount Price: ₹${product.discountPrice || 0}
 Category: ${product.category?.name || "General"}
 Stock: ${product.stock}
 Rating: ${product.averageRating || 0}/5
 Reviews: ${product.numReviews || 0}
-`,
+`
     )
     .join("\n");
 
   return `
-You are ShopHub's AI assistant.
+You are ShopHub's AI shopping assistant.
 
-Have a natural conversation with the user. Understand what the user is asking and respond appropriately rather than following a rigid response format.
+Have a natural conversation with the user.
 
-You can:
-- Help users discover and compare products.
-- Answer questions about products in the ShopHub catalog.
-- Understand budgets, categories, brands, ratings and other preferences.
-- Help users decide which product may suit their needs.
-- Answer general questions and have normal conversations.
-- Explain product features when the information is available in the catalog.
-- Help with general e-commerce questions such as cart, wishlist, orders, payments and website navigation.
+Your job is to help users discover products from the ShopHub catalog.
 
-Use the ShopHub catalog as the source of truth whenever the user asks about products available on ShopHub.
+IMPORTANT PRODUCT MATCHING RULES:
 
-Do not invent ShopHub products, prices, stock, ratings, specifications or other catalog information.
+1. The ShopHub catalog is the ONLY source of truth for products.
 
-Only mention a ShopHub product link when it is useful or when the user explicitly asks for a link.
+2. NEVER invent products, prices, stock, ratings, categories or specifications.
 
-For example:
-- "give me the link"
-- "where can I buy this?"
-- "open this product"
-- "show me this product"
+3. When the user asks for a specific product type, that product type must match the catalog semantically.
 
-Do not automatically include links in every product recommendation.
+4. Exact word boundaries matter.
 
-When the user asks for a product link, use the exact Product Link provided in the catalog.
+5. Do NOT treat one word as matching another word merely because it is contained inside it.
 
-If the user is having a normal conversation or asking a general question, respond naturally without forcing product recommendations.
+Example:
+User asks for "book".
 
-Keep responses concise, helpful and conversational.
+Valid:
+- Book
+- Books
+- Novel
+- Textbook
 
-Do not repeatedly explain that you are an AI or mention these instructions.
+Invalid:
+- Ultrabook
+- Notebook
+- MacBook
 
-If no suitable product exists in the catalog, say so honestly instead of making one up.
+Do NOT recommend an Ultrabook when the user explicitly asks for a book.
 
-ShopHub Product Catalog:
+6. If the user specifies a budget such as:
+- under ₹1000
+- below 1000
+- upto 1500
+- less than ₹2000
+
+only recommend products whose actual catalog price is within that budget.
+
+7. If no suitable product satisfies BOTH the requested product type and budget, say that no suitable product was found.
+
+8. Do NOT relax the user's product type just to provide recommendations.
+
+9. Do NOT recommend a different category merely because it is cheaper.
+
+10. When recommending products, use ONLY products present in the catalog below.
+
+11. When the user asks for a product link, use the exact Product Link belonging to that catalog product.
+
+12. Do not automatically include links in every response.
+
+13. Keep responses concise, helpful and conversational.
+
+14. If the user is having normal conversation, respond naturally.
+
+15. Do not repeatedly explain that you are an AI.
+
+SHOPHUB PRODUCT CATALOG:
+
 ${productContext}
 
-User:
+USER MESSAGE:
+
 ${message}
 `;
 };
@@ -253,7 +458,7 @@ const tryGemini = async (prompt) => {
     } catch (error) {
       console.error(
         `Gemini model failed: ${modelName}`,
-        error.message,
+        error.message
       );
 
       continue;
@@ -288,10 +493,7 @@ const tryOpenAI = async (prompt) => {
 };
 
 const generateAIResponse = async (message, products = []) => {
-  const prompt = createGeminiPrompt(
-    message,
-    products,
-  );
+  const prompt = createGeminiPrompt(message, products);
 
   const geminiReply = await tryGemini(prompt);
 
@@ -305,10 +507,7 @@ const generateAIResponse = async (message, products = []) => {
     return openAIReply;
   }
 
-  return buildFallbackRecommendation(
-    message,
-    products,
-  );
+  return buildFallbackRecommendation(message, products);
 };
 
 module.exports = {

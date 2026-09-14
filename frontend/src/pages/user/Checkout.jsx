@@ -319,16 +319,51 @@ const Checkout = () => {
   const loadRazorpay = () =>
     new Promise((resolve, reject) => {
       if (window.Razorpay) {
-        return resolve();
+        resolve();
+        return;
       }
 
-      const script =
-        document.createElement("script");
+      const existingScript = document.querySelector(
+        'script[src="https://checkout.razorpay.com/v1/checkout.js"]',
+      );
+
+      if (existingScript) {
+        existingScript.addEventListener(
+          "load",
+          () => resolve(),
+        );
+
+        existingScript.addEventListener(
+          "error",
+          () =>
+            reject(
+              new Error(
+                "Razorpay SDK failed to load",
+              ),
+            ),
+        );
+
+        return;
+      }
+
+      const script = document.createElement("script");
 
       script.src =
         "https://checkout.razorpay.com/v1/checkout.js";
 
-      script.onload = () => resolve();
+      script.async = true;
+
+      script.onload = () => {
+        if (window.Razorpay) {
+          resolve();
+        } else {
+          reject(
+            new Error(
+              "Razorpay SDK loaded but is unavailable",
+            ),
+          );
+        }
+      };
 
       script.onerror = () =>
         reject(
@@ -355,11 +390,8 @@ const Checkout = () => {
       );
 
     if (
-      !(
-        payResp &&
-        payResp.success &&
-        payResp.order
-      )
+      !payResp?.success ||
+      !payResp?.order
     ) {
       throw new Error(
         payResp?.message ||
@@ -369,48 +401,106 @@ const Checkout = () => {
 
     const razorOrder = payResp.order;
 
+    if (!payResp.key_id) {
+      throw new Error(
+        "Razorpay key is missing",
+      );
+    }
+
+    if (!razorOrder.id) {
+      throw new Error(
+        "Razorpay order ID is missing",
+      );
+    }
+
+    if (!razorOrder.amount) {
+      throw new Error(
+        "Invalid Razorpay amount",
+      );
+    }
+
     return new Promise(
       (resolve, reject) => {
+        let settled = false;
+
+        const finish = (result) => {
+          if (settled) return;
+
+          settled = true;
+          resolve(result);
+        };
+
+        const fail = (error) => {
+          if (settled) return;
+
+          settled = true;
+          reject(error);
+        };
+
         const options = {
           key: payResp.key_id,
 
           amount: razorOrder.amount,
 
-          currency: razorOrder.currency,
+          currency:
+            razorOrder.currency || "INR",
 
-          name: "My Store",
+          name: "ShopHub",
 
-          description: `Order ${createdOrder._id}`,
+          description:
+            `Order ${createdOrder._id}`,
 
           order_id: razorOrder.id,
 
-          handler: async function (
-            response,
-          ) {
+          prefill: {
+            name:
+              createdOrder?.shippingAddress
+                ?.fullName || "",
+            contact:
+              createdOrder?.shippingAddress
+                ?.mobile || "",
+          },
+
+          theme: {
+            color: "#2563eb",
+          },
+
+          handler: async function (response) {
             try {
-              const verifyRes =
-                await paymentService.verifyPayment(
-                  {
-                    razorpay_order_id:
-                      response.razorpay_order_id,
-
-                    razorpay_payment_id:
-                      response.razorpay_payment_id,
-
-                    razorpay_signature:
-                      response.razorpay_signature,
-
-                    orderId:
-                      createdOrder._id,
-                  },
+              if (
+                !response?.razorpay_order_id ||
+                !response?.razorpay_payment_id ||
+                !response?.razorpay_signature
+              ) {
+                throw new Error(
+                  "Incomplete payment response",
                 );
+              }
+
+              const verifyRes =
+                await paymentService.verifyPayment({
+                  razorpay_order_id:
+                    response.razorpay_order_id,
+
+                  razorpay_payment_id:
+                    response.razorpay_payment_id,
+
+                  razorpay_signature:
+                    response.razorpay_signature,
+
+                  orderId:
+                    createdOrder._id,
+                });
 
               if (verifyRes?.success) {
-                resolve({
+                finish({
                   paid: true,
+                  order:
+                    verifyRes.order ||
+                    createdOrder,
                 });
               } else {
-                reject(
+                fail(
                   new Error(
                     verifyRes?.message ||
                       "Payment verification failed",
@@ -418,23 +508,54 @@ const Checkout = () => {
                 );
               }
             } catch (err) {
-              reject(err);
+              fail(err);
             }
           },
 
           modal: {
             ondismiss: function () {
-              resolve({
+              finish({
                 cancelled: true,
               });
             },
           },
         };
 
-        const rzp =
-          new window.Razorpay(options);
+        try {
+          const rzp =
+            new window.Razorpay(options);
 
-        rzp.GIMINI();
+          rzp.on(
+            "payment.failed",
+            function (response) {
+              const error =
+                response?.error || {};
+
+              finish({
+                failed: true,
+                reason:
+                  error.description ||
+                  error.reason ||
+                  "Payment failed",
+                errorCode:
+                  error.code || "",
+                errorDescription:
+                  error.description || "",
+                razorpayOrderId:
+                  response?.error?.metadata
+                    ?.order_id ||
+                  razorOrder.id,
+              });
+            },
+          );
+
+          // IMPORTANT:
+          // Razorpay Checkout must be opened
+          // using rzp.open()
+          rzp.open();
+        } catch (error) {
+          fail(error);
+        }
       },
     );
   };
@@ -472,8 +593,7 @@ const Checkout = () => {
        * confirms addressId + paymentMethod.
        *
        * Coupon is therefore not added to this
-       * payload yet. Backend order validation needs
-       * to support couponId/code before doing that.
+       * payload yet.
        */
 
       const res = await dispatch(
@@ -484,11 +604,8 @@ const Checkout = () => {
       ).unwrap();
 
       if (
-        !(
-          res &&
-          res.success &&
-          res.order
-        )
+        !res?.success ||
+        !res?.order
       ) {
         throw new Error(
           res?.message ||
@@ -498,8 +615,28 @@ const Checkout = () => {
 
       const createdOrder = res.order;
 
-      dispatch(clearCartState());
+      /*
+       * COD:
+       * Order is successfully placed, so clear cart.
+       */
+      if (paymentMethod === "COD") {
+        dispatch(clearCartState());
 
+        toast.success(
+          "Order placed successfully",
+        );
+
+        navigate("/orders");
+        return;
+      }
+
+      /*
+       * RAZORPAY:
+       * Do NOT clear the cart before payment succeeds.
+       *
+       * If the user cancels/fails payment,
+       * their cart remains available.
+       */
       if (paymentMethod === "RAZORPAY") {
         try {
           const paymentResult =
@@ -507,31 +644,73 @@ const Checkout = () => {
               createdOrder,
             );
 
-          if (paymentResult.cancelled) {
-            toast.error(
-              "Payment cancelled. Order is saved in your orders.",
-            );
-          } else {
+          if (paymentResult?.paid) {
+            dispatch(clearCartState());
+
             toast.success(
               "Payment successful",
             );
+
+            navigate("/orders");
+            return;
           }
+
+          if (paymentResult?.cancelled) {
+            toast.error(
+              "Payment cancelled. Your cart has been kept.",
+            );
+
+            navigate("/orders");
+            return;
+          }
+
+          if (paymentResult?.failed) {
+            toast.error(
+              paymentResult.reason ||
+                "Payment failed. Your cart has been kept.",
+            );
+
+            navigate("/orders");
+            return;
+          }
+
+          toast.error(
+            "Payment was not completed. Your cart has been kept.",
+          );
+
+          navigate("/orders");
         } catch (err) {
+          console.error(
+            "Razorpay payment error:",
+            err,
+          );
+
           toast.error(
             getErrorMessage(
               err,
-              "Order placed, but payment failed",
+              "Payment failed. Your cart has been kept.",
             ),
           );
+
+          navigate("/orders");
         }
-      } else {
-        toast.success(
-          "Order placed successfully",
-        );
+
+        return;
       }
+
+      dispatch(clearCartState());
+
+      toast.success(
+        "Order placed successfully",
+      );
 
       navigate("/orders");
     } catch (err) {
+      console.error(
+        "Place order error:",
+        err,
+      );
+
       toast.error(
         getErrorMessage(
           err,
@@ -573,9 +752,7 @@ const Checkout = () => {
 
           <div className="grid lg:grid-cols-[1fr_380px] gap-6 items-start">
 
-            {/* ======================================
-                LEFT
-            ====================================== */}
+            {/* LEFT */}
 
             <div className="space-y-6">
 
@@ -670,9 +847,7 @@ const Checkout = () => {
                                     addr.pincode,
                                   ]
                                     .filter(Boolean)
-                                    .join(
-                                      ", ",
-                                    )}
+                                    .join(", ")}
                                 </p>
 
                               </div>
@@ -824,8 +999,7 @@ const Checkout = () => {
                         onChange={(e) =>
                           setNewAddress({
                             ...newAddress,
-                            city:
-                              e.target.value,
+                            city: e.target.value,
                           })
                         }
                         type="text"
@@ -950,8 +1124,7 @@ const Checkout = () => {
                       name="paymentMethod"
                       value="COD"
                       checked={
-                        paymentMethod ===
-                        "COD"
+                        paymentMethod === "COD"
                       }
                       onChange={(e) =>
                         setPaymentMethod(
@@ -979,8 +1152,7 @@ const Checkout = () => {
 
                   <label
                     className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition ${
-                      paymentMethod ===
-                      "RAZORPAY"
+                      paymentMethod === "RAZORPAY"
                         ? "border-blue-500 bg-blue-50/40"
                         : "border-gray-200"
                     }`}
@@ -991,8 +1163,7 @@ const Checkout = () => {
                       name="paymentMethod"
                       value="RAZORPAY"
                       checked={
-                        paymentMethod ===
-                        "RAZORPAY"
+                        paymentMethod === "RAZORPAY"
                       }
                       onChange={(e) =>
                         setPaymentMethod(
@@ -1022,9 +1193,7 @@ const Checkout = () => {
 
             </div>
 
-            {/* ======================================
-                RIGHT ORDER SUMMARY
-            ====================================== */}
+            {/* RIGHT ORDER SUMMARY */}
 
             <aside className="lg:sticky lg:top-24 space-y-5">
 
@@ -1048,14 +1217,11 @@ const Checkout = () => {
                       value={couponCode}
                       onChange={(e) =>
                         setCouponCode(
-                          e.target.value
-                            .toUpperCase(),
+                          e.target.value.toUpperCase(),
                         )
                       }
                       onKeyDown={(e) => {
-                        if (
-                          e.key === "Enter"
-                        ) {
+                        if (e.key === "Enter") {
                           e.preventDefault();
                           handleApplyCoupon();
                         }

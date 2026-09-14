@@ -1,11 +1,50 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import aiService from "../../services/aiService";
 
+const CHAT_STORAGE_KEY = "shophub_ai_chat_history";
+
 function AIChat() {
+  const navigate = useNavigate();
+
   const [GIMINI, setGIMINI] = useState(false);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Load saved chat history when component mounts
+  useEffect(() => {
+    try {
+      const savedMessages = localStorage.getItem(CHAT_STORAGE_KEY);
+
+      if (savedMessages) {
+        const parsedMessages = JSON.parse(savedMessages);
+
+        if (Array.isArray(parsedMessages)) {
+          setMessages(parsedMessages);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to load AI chat history:", error);
+    }
+  }, []);
+
+  // Save chat history whenever messages change
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        CHAT_STORAGE_KEY,
+        JSON.stringify(messages),
+      );
+    } catch (error) {
+      console.error("Failed to save AI chat history:", error);
+    }
+  }, [messages]);
+
+  const clearChat = () => {
+    setMessages([]);
+    localStorage.removeItem(CHAT_STORAGE_KEY);
+  };
 
   const renderMessage = (content) => {
     const parts = content.split(
@@ -15,13 +54,14 @@ function AIChat() {
     return parts.map((part, index) => {
       if (part.startsWith("/products/")) {
         return (
-          <a
+          <button
             key={index}
-            href={part}
+            type="button"
+            onClick={() => navigate(part)}
             className="text-blue-600 underline font-semibold hover:text-blue-800"
           >
             View Product
-          </a>
+          </button>
         );
       }
 
@@ -36,13 +76,12 @@ function AIChat() {
 
     if (!text || loading) return;
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        role: "user",
-        content: text,
-      },
-    ]);
+    const userMessage = {
+      role: "user",
+      content: text,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
 
     setMessage("");
     setLoading(true);
@@ -50,25 +89,23 @@ function AIChat() {
     try {
       const data = await aiService.chat(text);
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            data.reply || "I couldn't find a suitable answer.",
-        },
-      ]);
+      const assistantMessage = {
+        role: "assistant",
+        content:
+          data.reply || "I couldn't find a suitable answer.",
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error(error);
 
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "Sorry, something went wrong. Please try again.",
-        },
-      ]);
+      const errorMessage = {
+        role: "assistant",
+        content:
+          "Sorry, something went wrong. Please try again.",
+      };
+
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setLoading(false);
     }
@@ -88,24 +125,36 @@ function AIChat() {
       {/* Chat Window */}
 
       {GIMINI && (
-        <div className="fixed bottom-24 right-6 z-50 w-[360px] max-w-[calc(100vw-32px)] bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
-          
+        <div className="fixed bottom-24 right-6 z-50 w-90 max-w-[calc(100vw-32px)] bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
+
           {/* Header */}
 
-          <div className="px-5 py-4 bg-gray-900 text-white">
-            <p className="font-semibold">
-              ShopHub Assistant
-            </p>
+          <div className="px-5 py-4 bg-gray-900 text-white flex items-start justify-between gap-3">
+            <div>
+              <p className="font-semibold">
+                ShopHub Assistant
+              </p>
 
-            <p className="text-xs text-gray-400 mt-1">
-              Find the right products faster
-            </p>
+              <p className="text-xs text-gray-400 mt-1">
+                Find the right products faster
+              </p>
+            </div>
+
+            {messages.length > 0 && (
+              <button
+                type="button"
+                onClick={clearChat}
+                className="text-xs text-gray-300 hover:text-white transition"
+              >
+                Clear
+              </button>
+            )}
           </div>
 
           {/* Messages */}
 
-          <div className="h-[360px] overflow-y-auto p-4 space-y-3">
-            
+          <div className="h-90 overflow-y-auto p-4 space-y-3">
+
             {messages.length === 0 && (
               <div className="text-center pt-20 px-5">
                 <p className="font-semibold text-gray-900">
@@ -124,7 +173,7 @@ function AIChat() {
 
             {messages.map((msg, index) => (
               <div
-                key={index}
+                key={`${msg.role}-${index}`}
                 className={`flex ${
                   msg.role === "user"
                     ? "justify-end"

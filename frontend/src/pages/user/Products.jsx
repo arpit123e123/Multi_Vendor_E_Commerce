@@ -762,7 +762,7 @@ function Products() {
         ========================================== */}
 
         {mobileFilters && (
-          <div className="fixed inset-0 z-[60] md:hidden">
+          <div className="fixed inset-0 z-60 md:hidden">
 
             {/* BACKDROP */}
 

@@ -35,6 +35,7 @@ const productSchema = new mongoose.Schema(
       default: 0,
       min: [0, "Stock cannot be negative"],
     },
+
     brand: {
       type: String,
       required: true,
@@ -77,6 +78,7 @@ const productSchema = new mongoose.Schema(
         value: String,
       },
     ],
+
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Category",
@@ -161,7 +163,51 @@ const productSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
+
+/*
+ * Product query indexes
+ *
+ * These indexes help common product listing/filtering operations
+ * without changing the existing product data structure.
+ */
+
+// Category based product listing
+productSchema.index({ category: 1, status: 1, isActive: 1 });
+
+// Vendor based product listing
+productSchema.index({ vendor: 1, status: 1, isActive: 1 });
+
+// Price filtering and sorting
+productSchema.index({ price: 1, status: 1, isActive: 1 });
+
+// Rating based sorting/filtering
+productSchema.index({
+  averageRating: -1,
+  status: 1,
+  isActive: 1,
+});
+
+// Popular products / sold based sorting
+productSchema.index({
+  sold: -1,
+  status: 1,
+  isActive: 1,
+});
+
+// Featured products
+productSchema.index({
+  isFeatured: -1,
+  status: 1,
+  isActive: 1,
+});
+
+// Latest products
+productSchema.index({
+  createdAt: -1,
+  status: 1,
+  isActive: 1,
+});
 
 module.exports = mongoose.model("Product", productSchema);
